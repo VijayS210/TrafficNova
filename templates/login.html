@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In | AI Road & Parking Congestion System</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body class="auth-body">
+  <div class="auth-wrapper">
+    <!-- Left Branding Panel -->
+    <div class="auth-hero">
+      <div>
+        <div class="brand-pill">🚦 Multi-City Urban Mobility AI</div>
+        <h1>AI Road & Parking Congestion System</h1>
+        <p>
+          Predict real-time road bottlenecks, check parking slot availability across 6 major Indian metros,
+          and discover automated bypass routes powered by XGBoost machine learning.
+        </p>
+        <ul class="feature-list">
+          <li>✓ Covers Bengaluru, Hyderabad, Mumbai, Chennai, Delhi & Kolkata</li>
+          <li>✓ Interactive Google Maps routing with automatic bypass detection</li>
+          <li>✓ Personal route history & 24-hour peak trend analytics</li>
+        </ul>
+      </div>
+      <div style="font-size: 0.8rem; color: #93c5fd;">
+        Pan-India Smart Mobility Engine • v2.5
+      </div>
+    </div>
+
+    <!-- Right Auth Form Panel -->
+    <div class="auth-form-panel">
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" id="tabLogin" onclick="switchAuth('login')">Sign In</button>
+        <button type="button" class="auth-tab" id="tabRegister" onclick="switchAuth('register')">Create Account</button>
+      </div>
+
+      {% if error %}
+        <div class="alert-box alert-red" style="margin-bottom: 16px;">{{ error }}</div>
+      {% endif %}
+      {% if success %}
+        <div class="alert-box alert-green" style="margin-bottom: 16px;">{{ success }}</div>
+      {% endif %}
+
+      <form method="POST" action="/login">
+        <input type="hidden" name="action" id="authAction" value="login" />
+
+        <div class="form-group" id="nameField" style="display: none;">
+          <label for="full_name">Full Name</label>
+          <input type="text" id="full_name" name="full_name" placeholder="e.g., Rahul Sharma" />
+        </div>
+
+        <div class="form-group">
+          <label for="city">🏙️ Select Your City</label>
+          <select id="city" name="city" required>
+            {% for c in cities %}
+              <option value="{{ c }}">{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" value="demo@smarttraffic.in" required />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" value="demo123" required />
+        </div>
+
+        <button type="submit" class="btn-primary" id="submitBtn" style="margin-top: 8px;">
+          Sign In to Dashboard →
+        </button>
+      </form>
+
+      <div class="demo-hint">
+        <strong>Instant Demo Login Pre-filled:</strong><br />
+        <code>demo@smarttraffic.in</code> / <code>demo123</code>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchAuth(mode) {
+      const isReg = mode === "register";
+      document.getElementById("authAction").value = mode;
+      document.getElementById("nameField").style.display = isReg ? "flex" : "none";
+      document.getElementById("tabLogin").classList.toggle("active", !isReg);
+      document.getElementById("tabRegister").classList.toggle("active", isReg);
+      document.getElementById("submitBtn").innerText = isReg ? "Create Account →" : "Sign In to Dashboard →";
+      if (isReg) {
+        document.getElementById("email").value = "";
+        document.getElementById("password").value = "";
+      }
+    }
+  </script>
+</body>
+</html>

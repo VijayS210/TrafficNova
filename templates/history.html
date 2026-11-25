@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Search History | SmartMobility AI</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      🚦 <span>SmartMobility AI</span>
+      <span class="tag">Search Archive</span>
+    </div>
+
+    <!-- Top Right User Pill & Dropdown Menu -->
+    <div class="profile-menu-container" id="profileMenuContainer">
+      <button type="button" class="profile-trigger" onclick="toggleProfileDropdown()">
+        <div class="user-avatar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+        <span>{{ user_name }}</span>
+        <span class="chevron" id="profileChevron">▼</span>
+      </button>
+
+      <div class="profile-dropdown" id="profileDropdown">
+        <a href="/" class="dropdown-item">
+          <span>🗺️</span> Dashboard
+        </a>
+        <button type="button" class="dropdown-item" onclick="openAccountModal()">
+          <span>👤</span> Account
+        </button>
+        <a href="/logout" class="dropdown-item">
+          <span>🔄</span> Switch Account
+        </a>
+        <a href="/history" class="dropdown-item">
+          <span>🕒</span> Search History
+        </a>
+        <div class="dropdown-divider"></div>
+        <a href="/logout" class="dropdown-item danger">
+          <span>🚪</span> Log out
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Account Info Modal -->
+  <div class="modal-backdrop" id="accountModal" onclick="closeAccountModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3>👤 Account Details</h3>
+        <button type="button" class="modal-close" onclick="closeAccountModal()">✕</button>
+      </div>
+      <div class="account-row">
+        <span>Username</span>
+        <strong>{{ user_name }}</strong>
+      </div>
+      <div class="account-row">
+        <span>Registered Email</span>
+        <strong>{{ user_email }}</strong>
+      </div>
+      <div class="account-row">
+        <span>ML Engine Status</span>
+        <strong style="color:#10b981;">Active (XGBoost v2)</strong>
+      </div>
+      <div style="margin-top: 18px;">
+        <a href="/logout" class="btn-primary" style="text-align:center; text-decoration:none; display:block;">Switch Account</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="page-container">
+    <div class="page-title-bar">
+      <div>
+        <h1>🕒 Full Route & Prediction Search History</h1>
+        <p style="color:#94a3b8; font-size:0.9rem; margin-top:4px;">
+          Filter your past route forecasts by timeframe, traffic congestion level, or parking lot occupancy.
+        </p>
+      </div>
+      <a href="/" class="btn-back">← Back to Dashboard</a>
+    </div>
+
+    <!-- Filter Options Menu -->
+    <section class="filter-bar">
+      <div class="filter-group">
+        <label for="timeFilter">📅 Time Period</label>
+        <select id="timeFilter" onchange="applyFilters()">
+          <option value="ALL">All Time</option>
+          <option value="1D">Last 1 Day (24 Hours)</option>
+          <option value="1W">Last 1 Week (7 Days)</option>
+          <option value="1Y">Last 1 Year (365 Days)</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="trafficFilter">🚦 Traffic Status</label>
+        <select id="trafficFilter" onchange="applyFilters()">
+          <option value="ALL">All Traffic Levels</option>
+          <option value="LOW">🟢 Low Congestion</option>
+          <option value="MODERATE">🟡 Moderate Congestion</option>
+          <option value="HIGH">🔴 High Congestion</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="parkingFilter">🅿️ Parking Lot Occupancy</label>
+        <select id="parkingFilter" onchange="applyFilters()">
+          <option value="ALL">All Occupancy Levels</option>
+          <option value="LOW">Low (&lt; 40% Full)</option>
+          <option value="MODERATE">Moderate (40% – 79% Full)</option>
+          <option value="HIGH">High / Near Full (≥ 80%)</option>
+        </select>
+      </div>
+
+      <div class="filter-actions">
+        <button type="button" class="btn-reset" onclick="resetFilters()">Reset Filters</button>
+        <button type="button" class="btn-clear" style="padding:10px 14px;" onclick="clearAllHistory()">Clear All</button>
+      </div>
+    </section>
+
+    <!-- Filtered History Table -->
+    <section class="full-history-card">
+      <div class="card-header">
+        <h3 id="resultCount">Loading search records...</h3>
+      </div>
+
+      <div class="full-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>From (Origin)</th>
+              <th>To (Destination)</th>
+              <th>Travel Date & Time</th>
+              <th>Weather</th>
+              <th>Traffic Status</th>
+              <th>Parking Occupancy</th>
+              <th>Est. ETA</th>
+              <th>Searched On</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="fullHistoryBody">
+            <tr><td colspan="9" style="text-align:center; color:#94a3b8; padding:24px;">Loading records...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function toggleProfileDropdown() {
+      const dropdown = document.getElementById("profileDropdown");
+      const chevron = document.getElementById("profileChevron");
+      const isOpen = dropdown.classList.toggle("show");
+      chevron.style.transform = isOpen ? "rotate(180deg)" : "rotate(0deg)";
+    }
+
+    window.addEventListener("click", function (e) {
+      const container = document.getElementById("profileMenuContainer");
+      if (container && !container.contains(e.target)) {
+        document.getElementById("profileDropdown").classList.remove("show");
+        document.getElementById("profileChevron").style.transform = "rotate(0deg)";
+      }
+    });
+
+    function openAccountModal() {
+      document.getElementById("profileDropdown").classList.remove("show");
+      document.getElementById("accountModal").classList.add("show");
+    }
+
+    function closeAccountModal() {
+      document.getElementById("accountModal").classList.remove("show");
+    }
+
+    let allRecords = [];
+
+    async function fetchAllHistory() {
+      const res = await fetch("/api/history");
+      allRecords = await res.json();
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const timeVal = document.getElementById("timeFilter").value;
+      const trafficVal = document.getElementById("trafficFilter").value;
+      const parkingVal = document.getElementById("parkingFilter").value;
+
+      const now = new Date();
+      const dayMs = 24 * 60 * 60 * 1000;
+
+      const filtered = allRecords.filter(r => {
+        if (timeVal !== "ALL") {
+          const recordDate = r.iso_timestamp ? new Date(r.iso_timestamp) : new Date(r.searched_at);
+          const diffMs = now - recordDate;
+          if (!isNaN(diffMs)) {
+            if (timeVal === "1D" && diffMs > dayMs) return false;
+            if (timeVal === "1W" && diffMs > 7 * dayMs) return false;
+            if (timeVal === "1Y" && diffMs > 365 * dayMs) return false;
+          }
+        }
+
+        if (trafficVal !== "ALL" && r.traffic_status !== trafficVal) {
+          return false;
+        }
+
+        const occ = Number(r.parking_occ);
+        if (parkingVal === "LOW" && occ >= 40) return false;
+        if (parkingVal === "MODERATE" && (occ < 40 || occ >= 80)) return false;
+        if (parkingVal === "HIGH" && occ < 80) return false;
+
+        return true;
+      });
+
+      renderTable(filtered);
+    }
+
+    function renderTable(rows) {
+      const tbody = document.getElementById("fullHistoryBody");
+      document.getElementById("resultCount").innerText = `Showing ${rows.length} of ${allRecords.length} Search Records`;
+
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:#94a3b8; padding:28px;">No search records match the selected filters.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map(r => {
+        const occ = Number(r.parking_occ);
+        const barColor = occ >= 80 ? "#ef4444" : (occ >= 40 ? "#f59e0b" : "#10b981");
+        const replayUrl = `/?origin=${encodeURIComponent(r.origin_name)}&dest=${encodeURIComponent(r.dest_name)}&date=${encodeURIComponent(r.travel_date)}&hour=${r.travel_hour}`;
+
+        return `
+          <tr>
+            <td><strong>${r.origin_name}</strong></td>
+            <td><strong>${r.dest_name}</strong></td>
+            <td>${r.travel_date} at ${String(r.travel_hour).padStart(2, '0')}:00</td>
+            <td>${r.weather_label}</td>
+            <td><span class="pill pill-${r.traffic_status}">${r.traffic_status}</span></td>
+            <td>
+              <div class="occ-bar-wrap">
+                <div class="occ-track"><div class="occ-fill" style="width:${occ}%; background:${barColor};"></div></div>
+                <span>${occ}%</span>
+              </div>
+            </td>
+            <td><strong>${r.primary_eta} mins</strong></td>
+            <td style="color:#94a3b8; font-size:0.8rem;">${r.searched_at}</td>
+            <td><a href="${replayUrl}" class="btn-replay-sm">View on Map</a></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function resetFilters() {
+      document.getElementById("timeFilter").value = "ALL";
+      document.getElementById("trafficFilter").value = "ALL";
+      document.getElementById("parkingFilter").value = "ALL";
+      applyFilters();
+    }
+
+    async function clearAllHistory() {
+      await fetch("/api/history/clear", { method: "POST" });
+      allRecords = [];
+      applyFilters();
+    }
+
+    window.onload = fetchAllHistory;
+  </script>
+</body>
+</html>
