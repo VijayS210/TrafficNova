@@ -3,25 +3,68 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{ active_city }} | AI Road & Parking Congestion System</title>
+  <title>{{ active_city }} | Traffic Nova</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <!-- Professional Top Navigation Bar -->
+  <!-- Smart Route Loading Overlay (Shows ONLY while route & map data load) -->
+  <div class="route-loader-overlay" id="routeLoaderOverlay" aria-live="polite">
+    <div class="route-loader-card">
+      <div class="route-loader-title" id="loaderTitle">Calculating Optimal Route...</div>
+      <div class="route-loader-sub" id="loaderSub">Scanning {{ active_city }} corridors, stops & parking availability</div>
+
+      <div class="road-track-wrap">
+        <div class="road-endpoint" title="Origin">A</div>
+        <div class="road-line-base">
+          <div class="road-line-dashes"></div>
+          <div class="moving-car-wrapper">
+            <div class="car-headlight-beam"></div>
+            <!-- Sleek Vector Car Icon -->
+            <svg width="42" height="24" viewBox="0 0 64 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 22L13 10C14.2 7.5 16.8 6 19.6 6H41.5C44.5 6 47.2 7.7 48.5 10.4L53 19.5C56.5 20.2 59 22.8 59 26V28C59 29.1 58.1 30 57 30H53.5C53.5 33.3 50.8 36 47.5 36C44.2 36 41.5 33.3 41.5 30H22.5C22.5 33.3 19.8 36 16.5 36C13.2 36 10.5 33.3 10.5 30H7C5.9 30 5 29.1 5 28V25C5 23.4 6.2 22.1 8 22Z" fill="url(#carGrad)"/>
+              <path d="M18 10H39.5L44.5 18H14.5L18 10Z" fill="#060B14" fill-opacity="0.78"/>
+              <circle cx="16.5" cy="29.5" r="4.5" fill="#0F172A" stroke="#5EEAD4" stroke-width="2"/>
+              <circle cx="47.5" cy="29.5" r="4.5" fill="#0F172A" stroke="#5EEAD4" stroke-width="2"/>
+              <rect x="54" y="21" width="4" height="3" rx="1.5" fill="#FEF08A"/>
+              <defs>
+                <linearGradient id="carGrad" x1="5" y1="6" x2="59" y2="30" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#10B981"/>
+                  <stop offset="1" stop-color="#06B6D4"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </div>
+        <div class="road-endpoint dest" title="Destination">B</div>
+      </div>
+
+      <div class="route-loader-badge">
+        <span>Traffic Nova XGBoost + OSRM Routing</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Traffic Nova Top Navigation Bar -->
   <header class="topbar">
     <div class="topbar-brand">
-      🚦 <span>SmartMobility AI</span>
-      <span class="tag">🏙️ {{ active_city }}</span>
+      <a href="/" class="nova-logo">
+        <div class="nova-logo-icon">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+        </div>
+        <span class="nova-logo-text">Traffic Nova</span>
+      </a>
+      <span class="tag">{{ active_city }}</span>
     </div>
 
-    <!-- Top Right User Pill & Dropdown Menu -->
     <div class="profile-menu-container" id="profileMenuContainer">
       <button type="button" class="profile-trigger" onclick="toggleProfileDropdown()">
         <div class="user-avatar">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
@@ -31,22 +74,12 @@
       </button>
 
       <div class="profile-dropdown" id="profileDropdown">
-        <button type="button" class="dropdown-item" onclick="openModal('accountModal')">
-          <span>👤</span> Account
-        </button>
-        <button type="button" class="dropdown-item" onclick="openModal('cityModal')">
-          <span>🏙️</span> Change City ({{ active_city }})
-        </button>
-        <a href="/logout" class="dropdown-item">
-          <span>🔄</span> Switch Account
-        </a>
-        <a href="/history" class="dropdown-item">
-          <span>🕒</span> Search History
-        </a>
+        <button type="button" class="dropdown-item" onclick="openModal('accountModal')">Account</button>
+        <button type="button" class="dropdown-item" onclick="openModal('cityModal')">Change City ({{ active_city }})</button>
+        <a href="/logout" class="dropdown-item">Switch Account</a>
+        <a href="/history" class="dropdown-item">Search History</a>
         <div class="dropdown-divider"></div>
-        <a href="/logout" class="dropdown-item danger">
-          <span>🚪</span> Log out
-        </a>
+        <a href="/logout" class="dropdown-item danger">Log out</a>
       </div>
     </div>
   </header>
@@ -55,21 +88,12 @@
   <div class="modal-backdrop" id="accountModal" onclick="closeModal('accountModal')">
     <div class="modal-card" onclick="event.stopPropagation()">
       <div class="modal-header">
-        <h3>👤 Account Details</h3>
+        <h3>Account Details</h3>
         <button type="button" class="modal-close" onclick="closeModal('accountModal')">✕</button>
       </div>
-      <div class="account-row">
-        <span>Username</span>
-        <strong>{{ user_name }}</strong>
-      </div>
-      <div class="account-row">
-        <span>Registered Email</span>
-        <strong>{{ user_email }}</strong>
-      </div>
-      <div class="account-row">
-        <span>Active Metro City</span>
-        <strong style="color:#38bdf8;">{{ active_city }}</strong>
-      </div>
+      <div class="account-row"><span>Username</span><strong>{{ user_name }}</strong></div>
+      <div class="account-row"><span>Registered Email</span><strong>{{ user_email }}</strong></div>
+      <div class="account-row"><span>Active Metro City</span><strong style="color:#2dd4bf;">{{ active_city }}</strong></div>
       <div style="margin-top: 18px;">
         <a href="/logout" class="btn-primary" style="text-align:center; text-decoration:none; display:block;">Switch Account</a>
       </div>
@@ -80,19 +104,19 @@
   <div class="modal-backdrop" id="cityModal" onclick="closeModal('cityModal')">
     <div class="modal-card" onclick="event.stopPropagation()">
       <div class="modal-header">
-        <h3>🏙️ Select Metro City</h3>
+        <h3>Select Metro City</h3>
         <button type="button" class="modal-close" onclick="closeModal('cityModal')">✕</button>
       </div>
       <p style="font-size:0.84rem; color:#94a3b8; margin-bottom:14px;">
-        Switch city to load its 15 local corridors, bypass routes, and XGBoost traffic forecast:
+        Switch city to load its 15 local corridors, bypass routes, and Traffic Nova forecast:
       </p>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
         {% for c in cities %}
           <a href="/set-city/{{ c }}"
              style="padding:11px; border-radius:8px; text-align:center; text-decoration:none; font-weight:600; font-size:0.88rem;
-                    border:1px solid {{ '#38bdf8' if c == active_city else 'rgba(148,163,184,0.2)' }};
-                    background:{{ 'rgba(56,189,248,0.18)' if c == active_city else '#0b1120' }};
-                    color:{{ '#7dd3fc' if c == active_city else '#f8fafc' }};">
+                    border:1px solid {{ '#2dd4bf' if c == active_city else 'rgba(148,163,184,0.2)' }};
+                    background:{{ 'rgba(20,184,166,0.18)' if c == active_city else '#080f1c' }};
+                    color:{{ '#5eead4' if c == active_city else '#f1f5f9' }};">
             {{ c }}
           </a>
         {% endfor %}
@@ -106,7 +130,7 @@
       <h2>{{ active_city }} Route Planner</h2>
 
       <div class="form-group">
-        <label for="origin">📍 From (Starting Point)</label>
+        <label for="origin">From (Starting Point)</label>
         <select id="origin" onchange="toggleCustomInput('origin', 'customOriginBox')">
           {% for orig in origins %}
             <option value="{{ orig }}" {% if loop.index == 1 %}selected{% endif %}>{{ orig }}</option>
@@ -120,7 +144,7 @@
       </div>
 
       <div class="form-group">
-        <label for="destination">🏁 To (Destination Hub)</label>
+        <label for="destination">To (Destination Hub)</label>
         <select id="destination" onchange="toggleCustomInput('destination', 'customDestBox')">
           {% for dest in destinations %}
             <option value="{{ dest }}" {% if loop.index == 2 %}selected{% endif %}>{{ dest }}</option>
@@ -133,18 +157,24 @@
         <input type="text" id="customDest" placeholder="Enter destination in {{ active_city }}" />
       </div>
 
+      <!-- Dynamic Stops List & Add Stop Button Below Destination -->
+      <div id="stopsContainer" class="stops-container"></div>
+      <button type="button" class="btn-add-stop" onclick="addStop()">
+        + Add Stop (Between From & To)
+      </button>
+
       <div class="form-group">
-        <label for="travelDate">📅 Travel Date</label>
+        <label for="travelDate">Travel Date</label>
         <input type="date" id="travelDate" />
       </div>
 
       <div class="form-group">
-        <label for="hourSlider">⏰ Departure Time: <span id="hourLabel" style="color:#38bdf8;">19:00</span></label>
+        <label for="hourSlider">Departure Time: <span id="hourLabel" style="color:#2dd4bf;">19:00</span></label>
         <input type="range" id="hourSlider" min="0" max="23" value="19" oninput="updateHourLabel()" />
       </div>
 
       <div class="form-group">
-        <label for="weather">🌦️ Weather Condition</label>
+        <label for="weather">Weather Condition</label>
         <select id="weather">
           <option value="0">Clear Sky</option>
           <option value="1" selected>Cloudy / Humid</option>
@@ -152,12 +182,12 @@
         </select>
       </div>
 
-      <button class="btn-primary" onclick="fetchPrediction(true)">🔍 Predict & Save Route</button>
+      <button class="btn-primary" id="predictBtn" onclick="fetchPrediction(true)">Predict & Save Route</button>
 
       {% if demo_mode %}
-        <div class="model-badge warn">⚠️ Simulation Mode Active</div>
+        <div class="model-badge warn">Simulation Mode Active</div>
       {% else %}
-        <div class="model-badge">✅ Multi-City XGBoost Online</div>
+        <div class="model-badge">Traffic Nova AI Online</div>
       {% endif %}
     </aside>
 
@@ -192,40 +222,188 @@
         </div>
       </section>
 
-      <!-- Interactive Google Map & Smart Recommendations -->
-      <section class="map-section">
-        <div class="card-box">
-          <div class="card-header">
-            <h3>🗺️ {{ active_city }} Live Corridor & Bypass Map</h3>
-            <span style="font-size:0.8rem; color:#94a3b8;">Solid: Primary • Dashed Green: Bypass</span>
-          </div>
-          <div id="map"></div>
+      <!-- Live Traffic Simulation -->
+      <section class="sim-card">
+        <div class="card-header">
+          <h3>Live Traffic Simulation</h3>
+          <span class="pill pill-LOW" id="simModeBadge">Live Stream Active</span>
         </div>
 
-        <div class="card-box advice-panel">
-          <h3>🛣️ AI Mobility Insights</h3>
-          <div id="primaryAdvice" class="alert-box alert-blue">Analyzing corridor...</div>
-          <div id="altAdvice" class="alert-box alert-green" style="display: none;"></div>
-          <div id="parkingAdvice" class="alert-box alert-blue">Checking parking capacity...</div>
-          <a id="gmapsLink" href="#" target="_blank" class="gmaps-btn">📲 Launch in Google Maps</a>
+        <div class="sim-metrics-grid">
+          <div class="sim-metric-box">
+            <div class="sim-metric-val" id="simVehicles" style="color:#10b981;">124</div>
+            <div class="sim-metric-label">Active Corridor Vehicles</div>
+          </div>
+          <div class="sim-metric-box">
+            <div class="sim-metric-val" id="simDensity" style="color:#f59e0b;">68%</div>
+            <div class="sim-metric-label">Road Density</div>
+          </div>
+          <div class="sim-metric-box">
+            <div class="sim-metric-val" id="simSpeed" style="color:#f8fafc;">32</div>
+            <div class="sim-metric-label">Avg Flow Speed (km/h)</div>
+          </div>
+        </div>
+
+        <div class="sim-controls-row">
+          <span style="font-size:0.8rem; color:#94a3b8;">Real-time corridor flow telemetry</span>
+          <span class="pill pill-MODERATE" id="simStatusPill">Moderate traffic</span>
+        </div>
+
+        <div class="sim-btn-group" style="margin-top:12px;">
+          <button type="button" class="sim-btn active-start" id="btnSimStart" onclick="startSimulation()">▶ Start</button>
+          <button type="button" class="sim-btn" id="btnSimPause" onclick="pauseSimulation()">⏸ Pause</button>
+          <button type="button" class="sim-btn" id="btnSimReset" onclick="resetSimulation()">↻ Reset</button>
         </div>
       </section>
 
-      <!-- Bottom Grid: 24-Hour Chart & User Search History (Max 2 Visible) -->
+      <!-- Enhanced Interactive Map & Route Comparison -->
+      <section class="map-section">
+        <div class="card-box">
+          <div class="card-header">
+            <h3>{{ active_city }} Live Corridor & Traffic Overlay Map</h3>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+              <span style="font-size:0.78rem; color:#94a3b8;">
+                <span style="color:#10b981;">● Fast</span> &nbsp;
+                <span style="color:#f59e0b;">● Moderate</span> &nbsp;
+                <span style="color:#ef4444;">● Slow</span> &nbsp;
+                <span style="color:#38bdf8;">● A/B</span> &nbsp;
+                <span style="color:#fbbf24;">● Stops</span> &nbsp;
+                <span style="color:#2dd4bf;">● P</span>
+              </span>
+              <button type="button" id="trafficLayerToggle" class="gtw-toggle-btn" onclick="toggleTrafficOverlay()">
+                Traffic Layer: ON
+              </button>
+            </div>
+          </div>
+
+          <div class="map-wrapper">
+            <div id="map"></div>
+
+            <!-- Google Maps Style Bottom Floating "Typical Traffic" Control -->
+            <div class="gmaps-traffic-widget" id="typicalTrafficWidget">
+              <div class="gtw-top-row">
+                <div class="gtw-title">
+                  <span>Typical traffic</span>
+                  <span id="gtwSelectedLabel" style="color:#0d9488; font-weight:800;">• 19:00</span>
+                </div>
+                <div class="gtw-legend">
+                  <span>Fast</span>
+                  <span class="gtw-bar" style="background:#10b981;"></span>
+                  <span class="gtw-bar" style="background:#f59e0b;"></span>
+                  <span class="gtw-bar" style="background:#ef4444;"></span>
+                  <span class="gtw-bar" style="background:#991b1b;"></span>
+                  <span>Slow</span>
+                </div>
+              </div>
+
+              <div class="gtw-bottom-row">
+                <div class="gtw-days" id="gtwDayButtons">
+                  <button type="button" class="gtw-day-btn" data-day="0" onclick="selectTrafficDay(0)">S</button>
+                  <button type="button" class="gtw-day-btn" data-day="1" onclick="selectTrafficDay(1)">M</button>
+                  <button type="button" class="gtw-day-btn" data-day="2" onclick="selectTrafficDay(2)">T</button>
+                  <button type="button" class="gtw-day-btn" data-day="3" onclick="selectTrafficDay(3)">W</button>
+                  <button type="button" class="gtw-day-btn" data-day="4" onclick="selectTrafficDay(4)">T</button>
+                  <button type="button" class="gtw-day-btn active" data-day="5" onclick="selectTrafficDay(5)">F</button>
+                  <button type="button" class="gtw-day-btn" data-day="6" onclick="selectTrafficDay(6)">S</button>
+                </div>
+
+                <div class="gtw-slider-wrap">
+                  <input type="range" id="gtwHourSlider" min="6" max="22" value="19" oninput="syncMapTrafficTime(this.value)" />
+                  <div class="gtw-ticks">
+                    <span>6:00 AM</span>
+                    <span>10:00 AM</span>
+                    <span>4:00 PM</span>
+                    <span>10:00 PM</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Route Comparison Panel -->
+          <div class="route-compare-grid">
+            <div class="compare-box">
+              <h4>
+                <span>Primary Corridor</span>
+                <span class="pill pill-HIGH" id="compPrimBadge">--</span>
+              </h4>
+              <div class="compare-stat-row"><span>Travel Time:</span><strong id="compPrimTime">--</strong></div>
+              <div class="compare-stat-row"><span>Distance:</span><strong id="compPrimDist">--</strong></div>
+              <div class="compare-stat-row"><span>Est. Fuel Burn:</span><strong id="compPrimFuel">--</strong></div>
+            </div>
+
+            <div class="compare-box alt-highlight">
+              <h4>
+                <span>Alternative Bypass</span>
+                <span class="pill pill-LOW" id="compAltBadge">Recommended</span>
+              </h4>
+              <div class="compare-stat-row"><span>Travel Time:</span><strong id="compAltTime">--</strong></div>
+              <div class="compare-stat-row"><span>Distance:</span><strong id="compAltDist">--</strong></div>
+              <div class="compare-stat-row"><span>Est. Fuel Burn:</span><strong id="compAltFuel">--</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel: AI Prediction Explanation & Summary -->
+        <div style="display:flex; flex-direction:column; gap:18px;">
+          <div class="ai-report-card" style="margin-bottom:0;">
+            <div class="card-header" style="margin-bottom:4px;">
+              <h3>AI Prediction Report</h3>
+              <span class="pill pill-HIGH" id="aiReportBadge">High congestion</span>
+            </div>
+            <div class="risk-headline" id="aiRiskPct" style="color:#ef4444;">82% congestion risk</div>
+            <div style="font-size:0.78rem; color:#94a3b8;">Factors influencing XGBoost prediction</div>
+
+            <div class="factor-list">
+              <div>
+                <div class="factor-item-head"><span>Vehicle density</span><span id="valDensity">90%</span></div>
+                <div class="factor-track"><div class="factor-fill" id="barDensity" style="width:90%;"></div></div>
+              </div>
+              <div>
+                <div class="factor-item-head"><span>Historical traffic</span><span id="valHistory">80%</span></div>
+                <div class="factor-track"><div class="factor-fill" id="barHistory" style="width:80%;"></div></div>
+              </div>
+              <div>
+                <div class="factor-item-head"><span>Time of day</span><span id="valTime">75%</span></div>
+                <div class="factor-track"><div class="factor-fill" id="barTime" style="width:75%;"></div></div>
+              </div>
+              <div>
+                <div class="factor-item-head"><span>Weather conditions</span><span id="valWeather">45%</span></div>
+                <div class="factor-track"><div class="factor-fill" id="barWeather" style="width:45%;"></div></div>
+              </div>
+            </div>
+
+            <div class="ai-rec-footer">
+              <strong style="font-size:0.86rem; color:#fbbf24;">💡 AI Recommendation</strong>
+              <span id="aiRecText" style="font-size:0.83rem; color:#cbd5e1;">Consider an alternative route to reduce your expected travel time.</span>
+            </div>
+          </div>
+
+          <div class="card-box advice-panel">
+            <h3>Corridor & Parking Summary</h3>
+            <div id="primaryAdvice" class="alert-box alert-blue">Analyzing corridor...</div>
+            <div id="altAdvice" class="alert-box alert-green" style="display: none;"></div>
+            <div id="parkingAdvice" class="alert-box alert-blue">Checking parking capacity...</div>
+            <a id="gmapsLink" href="#" target="_blank" class="gmaps-btn">Launch in Google Maps</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Grid: 24-Hour Chart & User Search History -->
       <section class="bottom-grid">
         <div class="card-box">
           <div class="card-header">
-            <h3 id="chartTitle">📈 24-Hour Congestion Forecast</h3>
+            <h3 id="chartTitle">24-Hour Congestion Forecast</h3>
           </div>
           <canvas id="trendChart" height="150"></canvas>
         </div>
 
         <div class="card-box" id="historySection">
           <div class="card-header">
-            <h3>🕒 Your Recent Search History (Latest 2)</h3>
+            <h3>Recent Search History (Latest 2)</h3>
             <div style="display:flex; align-items:center; gap:10px;">
-              <a href="/history" style="font-size:0.8rem; color:#38bdf8; text-decoration:none; font-weight:600;">View All →</a>
-              <button class="btn-clear" onclick="clearHistory()">Clear History</button>
+              <a href="/history" style="font-size:0.8rem; color:#2dd4bf; text-decoration:none; font-weight:600;">View All →</a>
+              <button class="btn-clear" onclick="clearHistory()">Clear</button>
             </div>
           </div>
           <div class="history-table-wrap">
@@ -252,6 +430,25 @@
   <script>
     const ACTIVE_CITY = "{{ active_city }}";
     const CITY_CENTER = {{ city_center | tojson }};
+    const CITY_LOCATIONS = {{ origins | tojson }};
+
+    function showRouteLoader(originLabel, destLabel) {
+      const overlay = document.getElementById("routeLoaderOverlay");
+      const btn = document.getElementById("predictBtn");
+      document.getElementById("loaderTitle").innerText =
+        `Mapping ${originLabel.split('/')[0]} ➔ ${destLabel.split('/')[0]}`;
+      document.getElementById("loaderSub").innerText =
+        `Loading live ${ACTIVE_CITY} traffic corridors, bypasses & parking slots...`;
+      overlay.classList.add("show");
+      if (btn) btn.disabled = true;
+    }
+
+    function hideRouteLoader() {
+      const overlay = document.getElementById("routeLoaderOverlay");
+      const btn = document.getElementById("predictBtn");
+      overlay.classList.remove("show");
+      if (btn) btn.disabled = false;
+    }
 
     function toggleProfileDropdown() {
       const dropdown = document.getElementById("profileDropdown");
@@ -289,162 +486,532 @@
       document.getElementById(boxId).style.display = val === "CUSTOM" ? "flex" : "none";
     }
 
-    const map = L.map("map").setView(CITY_CENTER, 12);
-    L.tileLayer("https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", {
+    /* =========================================================
+       MULTI-STOP MANAGEMENT & PRIORITY REORDERING
+       ========================================================= */
+    let routeStops = [];
+    let draggedStopIdx = null;
+
+    function addStop() {
+      const defaultLoc = CITY_LOCATIONS[Math.min(routeStops.length + 2, CITY_LOCATIONS.length - 1)] || CITY_LOCATIONS[0];
+      routeStops.push({ location: defaultLoc, custom_name: "" });
+      renderStops();
+    }
+
+    function removeStop(index) {
+      routeStops.splice(index, 1);
+      renderStops();
+    }
+
+    function moveStop(index, direction) {
+      const targetIdx = index + direction;
+      if (targetIdx < 0 || targetIdx >= routeStops.length) return;
+      const temp = routeStops[index];
+      routeStops[index] = routeStops[targetIdx];
+      routeStops[targetIdx] = temp;
+      renderStops();
+    }
+
+    function updateStopLocation(index, val) {
+      routeStops[index].location = val;
+      renderStops();
+    }
+
+    function updateStopCustom(index, val) {
+      routeStops[index].custom_name = val;
+    }
+
+    function renderStops() {
+      const container = document.getElementById("stopsContainer");
+      if (!routeStops.length) {
+        container.innerHTML = "";
+        return;
+      }
+
+      container.innerHTML = routeStops.map((stop, idx) => {
+        const optionsHtml = CITY_LOCATIONS.map(loc =>
+          `<option value="${loc}" ${stop.location === loc ? "selected" : ""}>${loc}</option>`
+        ).join("");
+
+        return `
+          <div class="stop-card"
+               draggable="true"
+               ondragstart="draggedStopIdx = ${idx}; this.classList.add('dragging')"
+               ondragend="this.classList.remove('dragging')"
+               ondragover="event.preventDefault()"
+               ondrop="handleStopDrop(${idx})">
+            <div class="stop-card-header">
+              <span class="stop-priority-badge" title="Drag or use arrows to change stop priority">
+                ⋮⋮ Stop #${idx + 1} (Priority ${idx + 1})
+              </span>
+              <div class="stop-actions">
+                <button type="button" class="stop-ctrl-btn" title="Higher Priority" onclick="moveStop(${idx}, -1)" ${idx === 0 ? "disabled" : ""}>↑</button>
+                <button type="button" class="stop-ctrl-btn" title="Lower Priority" onclick="moveStop(${idx}, 1)" ${idx === routeStops.length - 1 ? "disabled" : ""}>↓</button>
+                <button type="button" class="stop-ctrl-btn del" title="Remove Stop" onclick="removeStop(${idx})">✕</button>
+              </div>
+            </div>
+            <select onchange="updateStopLocation(${idx}, this.value)">
+              ${optionsHtml}
+              <option value="CUSTOM" ${stop.location === "CUSTOM" ? "selected" : ""}>Custom Stop (Type Below)</option>
+            </select>
+            ${stop.location === "CUSTOM"
+              ? `<input type="text" placeholder="Enter stop in ${ACTIVE_CITY}" value="${stop.custom_name}" oninput="updateStopCustom(${idx}, this.value)" />`
+              : ""
+            }
+          </div>
+        `;
+      }).join("");
+    }
+
+    function handleStopDrop(targetIdx) {
+      if (draggedStopIdx === null || draggedStopIdx === targetIdx) return;
+      const [moved] = routeStops.splice(draggedStopIdx, 1);
+      routeStops.splice(targetIdx, 0, moved);
+      draggedStopIdx = null;
+      renderStops();
+    }
+
+    /* =========================================================
+       LIVE TRAFFIC SIMULATION ENGINE
+       ========================================================= */
+    let simTimer = null;
+    let baseVehicles = 124;
+    let baseDensity = 68;
+    let currentVehicles = 124;
+    let currentDensity = 68;
+
+    function renderSimUI() {
+      const speed = Math.max(12, Math.round(68 - currentDensity * 0.52));
+      document.getElementById("simVehicles").innerText = currentVehicles;
+      document.getElementById("simDensity").innerText = `${currentDensity}%`;
+      document.getElementById("simSpeed").innerText = speed;
+
+      const pill = document.getElementById("simStatusPill");
+      const densityEl = document.getElementById("simDensity");
+
+      if (currentDensity >= 75) {
+        pill.className = "pill pill-HIGH";
+        pill.innerText = "Heavy traffic";
+        densityEl.style.color = "#ef4444";
+      } else if (currentDensity >= 45) {
+        pill.className = "pill pill-MODERATE";
+        pill.innerText = "Moderate traffic";
+        densityEl.style.color = "#f59e0b";
+      } else {
+        pill.className = "pill pill-LOW";
+        pill.innerText = "Low traffic";
+        densityEl.style.color = "#10b981";
+      }
+    }
+
+    function startSimulation() {
+      if (simTimer) return;
+      document.getElementById("btnSimStart").classList.add("active-start");
+      document.getElementById("simModeBadge").innerText = "Live Stream Active";
+      simTimer = setInterval(() => {
+        const deltaV = Math.floor(Math.random() * 11) - 4;
+        currentVehicles = Math.max(25, Math.min(260, currentVehicles + deltaV));
+        currentDensity = Math.max(18, Math.min(96, Math.round((currentVehicles / 220) * 100)));
+        renderSimUI();
+      }, 1500);
+    }
+
+    function pauseSimulation() {
+      clearInterval(simTimer);
+      simTimer = null;
+      document.getElementById("btnSimStart").classList.remove("active-start");
+      document.getElementById("simModeBadge").innerText = "Simulation Paused";
+    }
+
+    function resetSimulation() {
+      pauseSimulation();
+      currentVehicles = baseVehicles;
+      currentDensity = baseDensity;
+      renderSimUI();
+      startSimulation();
+    }
+
+    /* =========================================================
+       GOOGLE MAPS TRAFFIC LAYER + CITY-WIDE ROAD NETWORK + PINS
+       ========================================================= */
+    const map = L.map("map").setView(CITY_CENTER, 13);
+
+    const baseRoadTiles = L.tileLayer("https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", {
       attribution: "Google Maps",
-      maxZoom: 19,
+      maxZoom: 20,
     }).addTo(map);
 
+    const googleTrafficTiles = L.tileLayer("https://mt1.google.com/vt/lyrs=m@221097413,traffic&x={x}&y={y}&z={z}", {
+      attribution: "Google Traffic",
+      maxZoom: 20,
+      opacity: 0.92,
+    }).addTo(map);
+
+    let trafficOverlayEnabled = true;
+    let cityNetworkLayerGroup = L.layerGroup().addTo(map);
     let routeLayerGroup = L.layerGroup().addTo(map);
     let trendChartInstance = null;
 
-    async function fetchPrediction(saveHistory = true) {
-      const payload = {
-        city: ACTIVE_CITY,
-        origin: document.getElementById("origin").value,
-        custom_origin: document.getElementById("customOrigin").value,
-        destination: document.getElementById("destination").value,
-        custom_dest: document.getElementById("customDest").value,
-        date: document.getElementById("travelDate").value,
-        hour: document.getElementById("hourSlider").value,
-        weather: document.getElementById("weather").value,
-        save_history: saveHistory,
-      };
+    const blueStartIcon = L.divIcon({ className: "", html: `<div class="custom-pin-blue">A</div>`, iconSize: [28, 28], iconAnchor: [14, 14] });
+    const blueEndIcon = L.divIcon({ className: "", html: `<div class="custom-pin-blue">B</div>`, iconSize: [28, 28], iconAnchor: [14, 14] });
+    const parkingIcon = L.divIcon({ className: "", html: `<div class="custom-pin-parking">P</div>`, iconSize: [26, 26], iconAnchor: [13, 13] });
+    const checkpointIcon = L.divIcon({ className: "", html: `<div class="custom-pin-node"></div>`, iconSize: [18, 18], iconAnchor: [9, 9] });
 
-      const res = await fetch("/api/predict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+    function toggleTrafficOverlay() {
+      trafficOverlayEnabled = !trafficOverlayEnabled;
+      const btn = document.getElementById("trafficLayerToggle");
+      if (trafficOverlayEnabled) {
+        map.addLayer(googleTrafficTiles);
+        map.addLayer(cityNetworkLayerGroup);
+        btn.innerText = "Traffic Layer: ON";
+        btn.classList.remove("off");
+      } else {
+        map.removeLayer(googleTrafficTiles);
+        map.removeLayer(cityNetworkLayerGroup);
+        btn.innerText = "Traffic Layer: OFF";
+        btn.classList.add("off");
+      }
+    }
+
+    function selectTrafficDay(dayIdx) {
+      document.querySelectorAll(".gtw-day-btn").forEach(btn => {
+        btn.classList.toggle("active", parseInt(btn.dataset.day, 10) === dayIdx);
       });
-      const data = await res.json();
+      const now = new Date();
+      const diff = (dayIdx - now.getDay() + 7) % 7;
+      now.setDate(now.getDate() + diff);
+      document.getElementById("travelDate").valueAsDate = now;
+      fetchPrediction(false);
+    }
 
-      document.getElementById("routeHeader").innerHTML =
-        `[${data.city}] Route: <strong>${data.origin.name}</strong> ➔ <strong>${data.destination.name}</strong> &nbsp;|&nbsp; Departure: <strong>${payload.hour.padStart(2, "0")}:00</strong>`;
+    function syncMapTrafficTime(val) {
+      const hourInt = parseInt(val, 10);
+      document.getElementById("hourSlider").value = hourInt;
+      updateHourLabel();
+      document.getElementById("gtwSelectedLabel").innerText = `• ${String(hourInt).padStart(2, "0")}:00`;
+      fetchPrediction(false);
+    }
 
-      const levels = [
-        { text: "🟢 LOW", desc: "Free-flowing traffic", color: "#2563eb" },
-        { text: "🟡 MODERATE", desc: "Slow-moving at junctions", color: "#f59e0b" },
-        { text: "🔴 HIGH", desc: "Heavy bottleneck expected", color: "#ef4444" },
-      ];
-      const lvl = levels[data.road_level];
+    function drawSegmentedTrafficCorridor(coords, roadLevel, targetGroup, isSelectedRoute = false, label = "") {
+      if (!coords || coords.length < 2) return null;
 
-      document.getElementById("kpiTraffic").innerText = lvl.text;
-      document.getElementById("kpiTrafficSub").innerText = lvl.desc;
+      let casing = null;
+      if (isSelectedRoute) {
+        casing = L.polyline(coords, {
+          color: "#0f172a",
+          weight: 12,
+          opacity: 0.88,
+          lineCap: "round",
+          lineJoin: "round",
+        }).addTo(targetGroup);
+      } else {
+        L.polyline(coords, {
+          color: "#1e293b",
+          weight: 6,
+          opacity: 0.55,
+          lineCap: "round",
+          lineJoin: "round",
+        }).addTo(targetGroup);
+      }
 
-      document.getElementById("kpiParking").innerText = `${data.parking_occ}%`;
-      document.getElementById("kpiParkingSub").innerText = `${data.available_pct}% Slots Available`;
+      const palettes = {
+        0: ["#10b981", "#10b981", "#34d399", "#f59e0b", "#10b981"],
+        1: ["#10b981", "#f59e0b", "#f59e0b", "#ef4444", "#10b981"],
+        2: ["#f59e0b", "#ef4444", "#991b1b", "#ef4444", "#f59e0b"],
+      };
+      const colors = palettes[roadLevel] || palettes[1];
+      const chunkSize = Math.max(2, Math.floor(coords.length / colors.length));
+      const statusText = ["LOW (Fast)", "MODERATE", "HIGH (Heavy)"][roadLevel] || "MODERATE";
 
-      const totalEta = data.primary_route.duration_min + data.est_delay;
-      document.getElementById("kpiPrimaryEta").innerText = `${totalEta} mins (${data.primary_route.distance_km} km)`;
-      document.getElementById("kpiPrimarySub").innerText = `+${data.est_delay} min congestion delay`;
+      for (let i = 0; i < coords.length - 1; i += chunkSize) {
+        const slice = coords.slice(i, Math.min(coords.length, i + chunkSize + 1));
+        const segColor = colors[Math.floor(i / chunkSize) % colors.length];
+        const segLine = L.polyline(slice, {
+          color: segColor,
+          weight: isSelectedRoute ? 7 : 4,
+          opacity: isSelectedRoute ? 0.98 : 0.85,
+          lineCap: "round",
+          lineJoin: "round",
+        }).addTo(targetGroup);
 
-      routeLayerGroup.clearLayers();
+        if (label) {
+          segLine.bindPopup(`<b>${label}</b><br>Corridor Traffic: <b>${statusText}</b>`);
+        }
+      }
+      return casing;
+    }
 
-      L.marker([data.origin.lat, data.origin.lon])
-        .bindPopup(`<b>Origin:</b> ${data.origin.name}`)
-        .addTo(routeLayerGroup);
+    async function fetchPrediction(saveHistory = true) {
+      const hourVal = parseInt(document.getElementById("hourSlider").value, 10);
+      const weatherVal = parseInt(document.getElementById("weather").value, 10);
+      const origChoice = document.getElementById("origin").value;
+      const customOrigVal = document.getElementById("customOrigin").value;
+      const destChoice = document.getElementById("destination").value;
+      const customDestVal = document.getElementById("customDest").value;
 
-      L.marker([data.destination.lat, data.destination.lon])
-        .bindPopup(`<b>Destination:</b> ${data.destination.name}<br>Parking: ${data.parking_occ}% Full`)
-        .addTo(routeLayerGroup);
+      const displayOrig = origChoice === "CUSTOM" && customOrigVal.trim() ? customOrigVal.trim() : origChoice;
+      const displayDest = destChoice === "CUSTOM" && customDestVal.trim() ? customDestVal.trim() : destChoice;
 
-      const altAdviceEl = document.getElementById("altAdvice");
-      if (data.road_level >= 1 && data.alt_route) {
-        const altEta = data.alt_route.duration_min + Math.round(data.est_delay * 0.4);
-        const saved = Math.max(5, totalEta - altEta);
+      // Show the moving-car loading overlay only while the map route request is in flight
+      showRouteLoader(displayOrig, displayDest);
 
-        document.getElementById("kpiAltEta").innerText = `${altEta} mins (${data.alt_route.distance_km} km)`;
-        document.getElementById("kpiAltSub").innerText = `Saves ~${saved} mins`;
+      try {
+        const payload = {
+          city: ACTIVE_CITY,
+          origin: origChoice,
+          custom_origin: customOrigVal,
+          destination: destChoice,
+          custom_dest: customDestVal,
+          stops: routeStops,
+          date: document.getElementById("travelDate").value,
+          hour: hourVal,
+          weather: weatherVal,
+          save_history: saveHistory,
+        };
 
-        L.polyline(data.alt_route.coords, {
-          color: "#10b981",
-          weight: 7,
-          opacity: 0.95,
-          dashArray: "12, 8",
-        })
-          .bindTooltip(`Alternative Bypass: ${data.alt_route.distance_km} km`)
+        const res = await fetch("/api/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        document.getElementById("gtwHourSlider").value = Math.min(22, Math.max(6, hourVal));
+        document.getElementById("gtwSelectedLabel").innerText = `• ${String(hourVal).padStart(2, "0")}:00`;
+
+        const stopChainText = (data.stops && data.stops.length)
+          ? " ➔ " + data.stops.map(s => `<strong>[Stop ${s.priority}: ${s.name.split('/')[0]}]</strong>`).join(" ➔ ")
+          : "";
+        document.getElementById("routeHeader").innerHTML =
+          `[${data.city}] Route: <strong>${data.origin.name}</strong>${stopChainText} ➔ <strong>${data.destination.name}</strong> &nbsp;|&nbsp; Departure: <strong>${String(hourVal).padStart(2, "0")}:00</strong>`;
+
+        const levels = [
+          { text: "LOW", desc: "Free-flowing traffic", color: "#10b981", pill: "pill-LOW" },
+          { text: "MODERATE", desc: "Slow-moving at junctions", color: "#f59e0b", pill: "pill-MODERATE" },
+          { text: "HIGH", desc: "Heavy bottleneck expected", color: "#ef4444", pill: "pill-HIGH" },
+        ];
+        const lvl = levels[data.road_level];
+
+        document.getElementById("kpiTraffic").innerText = lvl.text;
+        document.getElementById("kpiTrafficSub").innerText = lvl.desc;
+        document.getElementById("kpiParking").innerText = `${data.parking_occ}%`;
+        document.getElementById("kpiParkingSub").innerText = `${data.available_pct}% Slots Available`;
+
+        const totalEta = data.primary_route.duration_min + data.est_delay;
+        document.getElementById("kpiPrimaryEta").innerText = `${totalEta} mins (${data.primary_route.distance_km} km)`;
+        document.getElementById("kpiPrimarySub").innerText = `+${data.est_delay} min congestion delay`;
+
+        baseDensity = data.road_level === 2 ? 84 : (data.road_level === 1 ? 62 : 34);
+        baseVehicles = Math.round((baseDensity / 100) * 210);
+        currentDensity = baseDensity;
+        currentVehicles = baseVehicles;
+        renderSimUI();
+
+        // Update AI Prediction Explanation Report
+        const densityFactor = Math.min(98, baseDensity + 6);
+        const histFactor = Math.min(95, Math.round(data.parking_occ * 0.92));
+        const timeFactor = (hourVal >= 8 && hourVal <= 11) || (hourVal >= 17 && hourVal <= 21) ? 85 : 42;
+        const weatherFactor = weatherVal === 2 ? 88 : (weatherVal === 1 ? 45 : 18);
+        const riskScore = Math.min(98, Math.round(densityFactor * 0.38 + histFactor * 0.27 + timeFactor * 0.22 + weatherFactor * 0.13));
+
+        document.getElementById("aiRiskPct").innerText = `${riskScore}% congestion risk`;
+        document.getElementById("aiRiskPct").style.color = lvl.color;
+        document.getElementById("aiReportBadge").className = `pill ${lvl.pill}`;
+        document.getElementById("aiReportBadge").innerText = `${lvl.text.charAt(0) + lvl.text.slice(1).toLowerCase()} congestion`;
+
+        document.getElementById("valDensity").innerText = `${densityFactor}%`;
+        document.getElementById("barDensity").style.width = `${densityFactor}%`;
+        document.getElementById("valHistory").innerText = `${histFactor}%`;
+        document.getElementById("barHistory").style.width = `${histFactor}%`;
+        document.getElementById("valTime").innerText = `${timeFactor}%`;
+        document.getElementById("barTime").style.width = `${timeFactor}%`;
+        document.getElementById("valWeather").innerText = `${weatherFactor}%`;
+        document.getElementById("barWeather").style.width = `${weatherFactor}%`;
+
+        document.getElementById("aiRecText").innerText = data.road_level >= 1
+          ? `Consider the alternative bypass route around ${data.destination.name} to save travel time and reduce idling fuel burn.`
+          : `Direct corridor is flowing smoothly. Proceed along the primary route with minimal delay.`;
+
+        // 1. Draw segmented Green/Yellow/Red traffic lines across ALL surrounding city roads
+        cityNetworkLayerGroup.clearLayers();
+        (data.city_network || []).forEach((corridor) => {
+          drawSegmentedTrafficCorridor(
+            corridor.coords,
+            corridor.road_level,
+            cityNetworkLayerGroup,
+            false,
+            corridor.name
+          );
+        });
+
+        // 2. Clear and re-render selected destination route + markers on top
+        routeLayerGroup.clearLayers();
+
+        const primaryLine = drawSegmentedTrafficCorridor(
+          data.primary_route.coords,
+          data.road_level,
+          routeLayerGroup,
+          true,
+          `Selected Route: ${data.origin.name} → ${data.destination.name}`
+        );
+        if (primaryLine) {
+          map.fitBounds(primaryLine.getBounds(), { padding: [45, 45] });
+        }
+
+        L.marker([data.origin.lat, data.origin.lon], { icon: blueStartIcon })
+          .bindPopup(`<b>Starting Point (A):</b> ${data.origin.name}<br>Status: ${lvl.text}`)
           .addTo(routeLayerGroup);
 
-        altAdviceEl.style.display = "block";
-        altAdviceEl.innerHTML = `<strong>🟢 Alternative Bypass (Dashed Green):</strong> Recommended secondary corridor (${data.alt_route.distance_km} km) saves ~${saved} mins.`;
-      } else {
-        document.getElementById("kpiAltEta").innerText = "Not Needed";
-        document.getElementById("kpiAltSub").innerText = "Primary route is clear";
-        altAdviceEl.style.display = "none";
-      }
+        (data.stops || []).forEach((st) => {
+          const stopPin = L.divIcon({
+            className: "",
+            html: `<div class="custom-pin-stop">${st.priority}</div>`,
+            iconSize: [26, 26],
+            iconAnchor: [13, 13],
+          });
+          L.marker([st.lat, st.lon], { icon: stopPin })
+            .bindPopup(`<b>Stop #${st.priority} (Priority ${st.priority}):</b> ${st.name}`)
+            .addTo(routeLayerGroup);
+        });
 
-      const primaryLine = L.polyline(data.primary_route.coords, {
-        color: lvl.color,
-        weight: 6,
-        opacity: 0.88,
-      })
-        .bindTooltip(`Primary Route: ${data.primary_route.distance_km} km`)
-        .addTo(routeLayerGroup);
+        L.marker([data.destination.lat, data.destination.lon], { icon: blueEndIcon })
+          .bindPopup(`<b>Destination Hub (B):</b> ${data.destination.name}<br>Parking Occupancy: ${data.parking_occ}%`)
+          .addTo(routeLayerGroup);
 
-      map.fitBounds(primaryLine.getBounds(), { padding: [35, 35] });
+        // Available Parking Location Markers near Destination
+        const parkingLots = [
+          { name: `${data.destination.name.split('/')[0]} Central Plaza Parking`, dLat: 0.0042, dLon: 0.0038, free: Math.max(8, data.available_pct) },
+          { name: `${data.destination.name.split('/')[0]} Metro Multi-Level Lot`, dLat: -0.0036, dLon: 0.0045, free: Math.max(12, Math.min(95, data.available_pct + 11)) },
+          { name: `${data.destination.name.split('/')[0]} Smart Bay West`, dLat: 0.0028, dLon: -0.0048, free: Math.max(5, Math.max(10, data.available_pct - 7)) },
+        ];
 
-      const primAdviceEl = document.getElementById("primaryAdvice");
-      if (data.road_level === 2) {
-        primAdviceEl.className = "alert-box alert-red";
-        primAdviceEl.innerHTML = `<strong>🔴 Primary Route (Solid Red):</strong> Severe congestion predicted at <b>${data.destination.name}</b> (+${data.est_delay} min delay).`;
-      } else if (data.road_level === 1) {
-        primAdviceEl.className = "alert-box alert-orange";
-        primAdviceEl.innerHTML = `<strong>🟠 Primary Route (Solid Orange):</strong> Moderate traffic buildup near <b>${data.destination.name}</b>.`;
-      } else {
-        primAdviceEl.className = "alert-box alert-blue";
-        primAdviceEl.innerHTML = `<strong>🔵 Primary Route (Solid Blue):</strong> Smooth flow along direct route (${data.primary_route.distance_km} km).`;
-      }
+        parkingLots.forEach(lot => {
+          L.marker([data.destination.lat + lot.dLat, data.destination.lon + lot.dLon], { icon: parkingIcon })
+            .bindPopup(`<b>🅿️ ${lot.name}</b><br>Available Slots: <b>${lot.free}% free</b>`)
+            .addTo(routeLayerGroup);
+        });
 
-      const parkAdviceEl = document.getElementById("parkingAdvice");
-      if (data.parking_occ >= 80) {
-        parkAdviceEl.className = "alert-box alert-orange";
-        parkAdviceEl.innerHTML = `<strong>🅿️ Parking Scarce:</strong> ${data.destination.name} lots are <b>${data.parking_occ}% full</b>.`;
-      } else {
-        parkAdviceEl.className = "alert-box alert-blue";
-        parkAdviceEl.innerHTML = `<strong>🅿️ Parking Open:</strong> <b>${data.available_pct}%</b> capacity free at ${data.destination.name}.`;
-      }
+        // Clickable Mid-Route Checkpoint Marker
+        const coords = data.primary_route.coords;
+        if (coords && coords.length > 4) {
+          const midIdx = Math.floor(coords.length / 2);
+          L.marker(coords[midIdx], { icon: checkpointIcon })
+            .bindPopup(`<b>Corridor Checkpoint:</b> ${data.origin.name.split('/')[0]} – ${data.destination.name.split('/')[0]} Link<br>Flow Speed: ${Math.max(14, 65 - baseDensity * 0.5).toFixed(0)} km/h<br>Congestion: <b>${lvl.text}</b>`)
+            .addTo(routeLayerGroup);
+        }
 
-      document.getElementById("gmapsLink").href =
-        `https://www.google.com/maps/dir/?api=1&origin=${data.origin.lat},${data.origin.lon}&destination=${data.destination.lat},${data.destination.lon}&travelmode=driving`;
+        // Route Comparison Panel Calculations
+        const primFuel = (data.primary_route.distance_km * 0.082 + data.est_delay * 0.025).toFixed(2);
+        document.getElementById("compPrimBadge").className = `pill ${lvl.pill}`;
+        document.getElementById("compPrimBadge").innerText = lvl.text;
+        document.getElementById("compPrimTime").innerText = `${totalEta} mins`;
+        document.getElementById("compPrimDist").innerText = `${data.primary_route.distance_km} km`;
+        document.getElementById("compPrimFuel").innerText = `${primFuel} L`;
 
-      document.getElementById("chartTitle").innerText = `📈 24-Hour Trend: ${data.destination.name}`;
-      const ctx = document.getElementById("trendChart").getContext("2d");
-      if (trendChartInstance) trendChartInstance.destroy();
+        const altAdviceEl = document.getElementById("altAdvice");
+        if (data.road_level >= 1 && data.alt_route) {
+          const altEta = data.alt_route.duration_min + Math.round(data.est_delay * 0.4);
+          const saved = Math.max(5, totalEta - altEta);
+          const altFuel = (data.alt_route.distance_km * 0.078 + Math.round(data.est_delay * 0.4) * 0.015).toFixed(2);
 
-      trendChartInstance = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`),
-          datasets: [
-            {
-              label: "Parking Occupancy (%)",
-              data: data.hourly_parking,
-              borderColor: "#38bdf8",
-              backgroundColor: "rgba(56, 189, 248, 0.14)",
-              tension: 0.35,
-              fill: true,
-            },
-            {
-              label: "Road Congestion Index",
-              data: data.hourly_road,
-              borderColor: "#f59e0b",
-              borderDash: [5, 5],
-              tension: 0.25,
-              fill: false,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: { min: 0, max: 105, ticks: { color: "#94a3b8" }, grid: { color: "rgba(148,163,184,0.1)" } },
-            x: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(148,163,184,0.1)" } },
+          document.getElementById("kpiAltEta").innerText = `${altEta} mins (${data.alt_route.distance_km} km)`;
+          document.getElementById("kpiAltSub").innerText = `Saves ~${saved} mins`;
+
+          document.getElementById("compAltBadge").innerText = `Saves ${saved}m`;
+          document.getElementById("compAltTime").innerText = `${altEta} mins`;
+          document.getElementById("compAltDist").innerText = `${data.alt_route.distance_km} km`;
+          document.getElementById("compAltFuel").innerText = `${altFuel} L`;
+
+          L.polyline(data.alt_route.coords, {
+            color: "#10b981",
+            weight: 7,
+            opacity: 0.95,
+            dashArray: "12, 8",
+          })
+            .bindPopup(`<b>Alternative Bypass Corridor</b><br>Distance: ${data.alt_route.distance_km} km<br>Est. Time: ${altEta} mins`)
+            .addTo(routeLayerGroup);
+
+          altAdviceEl.style.display = "block";
+          altAdviceEl.innerHTML = `<strong>Alternative Bypass (Dashed Green):</strong> Recommended secondary corridor (${data.alt_route.distance_km} km) saves ~${saved} mins.`;
+        } else {
+          document.getElementById("kpiAltEta").innerText = "Not Needed";
+          document.getElementById("kpiAltSub").innerText = "Primary route is clear";
+          document.getElementById("compAltBadge").innerText = "Optimal";
+          document.getElementById("compAltTime").innerText = `${totalEta} mins`;
+          document.getElementById("compAltDist").innerText = `${data.primary_route.distance_km} km`;
+          document.getElementById("compAltFuel").innerText = `${primFuel} L`;
+          altAdviceEl.style.display = "none";
+        }
+
+        const primAdviceEl = document.getElementById("primaryAdvice");
+        if (data.road_level === 2) {
+          primAdviceEl.className = "alert-box alert-red";
+          primAdviceEl.innerHTML = `<strong>Primary Route (Segmented Red/Amber):</strong> Heavy congestion predicted at <b>${data.destination.name}</b> (+${data.est_delay} min delay).`;
+        } else if (data.road_level === 1) {
+          primAdviceEl.className = "alert-box alert-orange";
+          primAdviceEl.innerHTML = `<strong>Primary Route (Segmented Amber/Green):</strong> Moderate traffic buildup near <b>${data.destination.name}</b>.`;
+        } else {
+          primAdviceEl.className = "alert-box alert-green";
+          primAdviceEl.innerHTML = `<strong>Primary Route (Segmented Green):</strong> Smooth flow along direct route (${data.primary_route.distance_km} km).`;
+        }
+
+        const parkAdviceEl = document.getElementById("parkingAdvice");
+        if (data.parking_occ >= 80) {
+          parkAdviceEl.className = "alert-box alert-orange";
+          parkAdviceEl.innerHTML = `<strong>Parking Scarce:</strong> ${data.destination.name} lots are <b>${data.parking_occ}% full</b>. Click any <b>P</b> pin on the map for nearby lots.`;
+        } else {
+          parkAdviceEl.className = "alert-box alert-blue";
+          parkAdviceEl.innerHTML = `<strong>Parking Open:</strong> <b>${data.available_pct}%</b> capacity free across 3 nearby parking hubs.`;
+        }
+
+        const wpParam = (data.stops && data.stops.length)
+          ? `&waypoints=${data.stops.map(s => `${s.lat},${s.lon}`).join("|")}`
+          : "";
+        document.getElementById("gmapsLink").href =
+          `https://www.google.com/maps/dir/?api=1&origin=${data.origin.lat},${data.origin.lon}&destination=${data.destination.lat},${data.destination.lon}${wpParam}&travelmode=driving`;
+
+        document.getElementById("chartTitle").innerText = `24-Hour Trend: ${data.destination.name}`;
+        const ctx = document.getElementById("trendChart").getContext("2d");
+        if (trendChartInstance) trendChartInstance.destroy();
+
+        trendChartInstance = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`),
+            datasets: [
+              {
+                label: "Parking Occupancy (%)",
+                data: data.hourly_parking,
+                borderColor: "#14b8a6",
+                backgroundColor: "rgba(20, 184, 166, 0.14)",
+                tension: 0.35,
+                fill: true,
+              },
+              {
+                label: "Road Congestion Index",
+                data: data.hourly_road,
+                borderColor: "#f59e0b",
+                borderDash: [5, 5],
+                tension: 0.25,
+                fill: false,
+              },
+            ],
           },
-          plugins: { legend: { labels: { color: "#f8fafc" } } },
-        },
-      });
+          options: {
+            responsive: true,
+            scales: {
+              y: { min: 0, max: 105, ticks: { color: "#94a3b8" }, grid: { color: "rgba(148,163,184,0.1)" } },
+              x: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(148,163,184,0.1)" } },
+            },
+            plugins: { legend: { labels: { color: "#f1f5f9" } } },
+          },
+        });
 
-      if (saveHistory) loadHistory();
+        if (saveHistory) await loadHistory();
+      } finally {
+        // Hide the car loader immediately once map tiles/routes finish rendering
+        hideRouteLoader();
+      }
     }
 
     async function loadHistory() {
@@ -470,6 +1037,7 @@
     }
 
     function replaySearch(orig, dest, dateVal, hourVal) {
+      const cleanDest = dest.replace(/\s*\(\+\d+\s+stops\)$/, "");
       const origSel = document.getElementById("origin");
       const destSel = document.getElementById("destination");
 
@@ -482,13 +1050,13 @@
         document.getElementById("customOrigin").value = orig;
       }
 
-      if ([...destSel.options].some(o => o.value === dest)) {
-        destSel.value = dest;
+      if ([...destSel.options].some(o => o.value === cleanDest)) {
+        destSel.value = cleanDest;
         toggleCustomInput("destination", "customDestBox");
       } else {
         destSel.value = "CUSTOM";
         toggleCustomInput("destination", "customDestBox");
-        document.getElementById("customDest").value = dest;
+        document.getElementById("customDest").value = cleanDest;
       }
 
       document.getElementById("travelDate").value = dateVal;
@@ -503,6 +1071,7 @@
     }
 
     window.onload = () => {
+      startSimulation();
       const params = new URLSearchParams(window.location.search);
       if (params.has("origin") && params.has("dest")) {
         replaySearch(

@@ -3,22 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Search History | SmartMobility AI</title>
+  <title>Search History | Traffic Nova</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 </head>
 <body>
-  <!-- Top Navigation Bar -->
+  <!-- Traffic Nova Top Navigation Bar -->
   <header class="topbar">
     <div class="topbar-brand">
-      🚦 <span>SmartMobility AI</span>
+      <a href="/" class="nova-logo">
+        <div class="nova-logo-icon">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+        </div>
+        <span class="nova-logo-text">Traffic Nova</span>
+      </a>
       <span class="tag">Search Archive</span>
     </div>
 
-    <!-- Top Right User Pill & Dropdown Menu -->
     <div class="profile-menu-container" id="profileMenuContainer">
       <button type="button" class="profile-trigger" onclick="toggleProfileDropdown()">
         <div class="user-avatar">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
@@ -28,45 +34,26 @@
       </button>
 
       <div class="profile-dropdown" id="profileDropdown">
-        <a href="/" class="dropdown-item">
-          <span>🗺️</span> Dashboard
-        </a>
-        <button type="button" class="dropdown-item" onclick="openAccountModal()">
-          <span>👤</span> Account
-        </button>
-        <a href="/logout" class="dropdown-item">
-          <span>🔄</span> Switch Account
-        </a>
-        <a href="/history" class="dropdown-item">
-          <span>🕒</span> Search History
-        </a>
+        <a href="/" class="dropdown-item">Dashboard</a>
+        <button type="button" class="dropdown-item" onclick="openAccountModal()">Account</button>
+        <a href="/logout" class="dropdown-item">Switch Account</a>
+        <a href="/history" class="dropdown-item">Search History</a>
         <div class="dropdown-divider"></div>
-        <a href="/logout" class="dropdown-item danger">
-          <span>🚪</span> Log out
-        </a>
+        <a href="/logout" class="dropdown-item danger">Log out</a>
       </div>
     </div>
   </header>
 
   <!-- Account Info Modal -->
-  <div class="modal-backdrop" id="accountModal" onclick="closeAccountModal(event)">
+  <div class="modal-backdrop" id="accountModal" onclick="closeAccountModal()">
     <div class="modal-card" onclick="event.stopPropagation()">
       <div class="modal-header">
-        <h3>👤 Account Details</h3>
+        <h3>Account Details</h3>
         <button type="button" class="modal-close" onclick="closeAccountModal()">✕</button>
       </div>
-      <div class="account-row">
-        <span>Username</span>
-        <strong>{{ user_name }}</strong>
-      </div>
-      <div class="account-row">
-        <span>Registered Email</span>
-        <strong>{{ user_email }}</strong>
-      </div>
-      <div class="account-row">
-        <span>ML Engine Status</span>
-        <strong style="color:#10b981;">Active (XGBoost v2)</strong>
-      </div>
+      <div class="account-row"><span>Username</span><strong>{{ user_name }}</strong></div>
+      <div class="account-row"><span>Registered Email</span><strong>{{ user_email }}</strong></div>
+      <div class="account-row"><span>AI Engine</span><strong style="color:#10b981;">Traffic Nova v2.5</strong></div>
       <div style="margin-top: 18px;">
         <a href="/logout" class="btn-primary" style="text-align:center; text-decoration:none; display:block;">Switch Account</a>
       </div>
@@ -77,7 +64,7 @@
   <div class="page-container">
     <div class="page-title-bar">
       <div>
-        <h1>🕒 Full Route & Prediction Search History</h1>
+        <h1>Route & Prediction Search History</h1>
         <p style="color:#94a3b8; font-size:0.9rem; margin-top:4px;">
           Filter your past route forecasts by timeframe, traffic congestion level, or parking lot occupancy.
         </p>
@@ -88,7 +75,7 @@
     <!-- Filter Options Menu -->
     <section class="filter-bar">
       <div class="filter-group">
-        <label for="timeFilter">📅 Time Period</label>
+        <label for="timeFilter">Time Period</label>
         <select id="timeFilter" onchange="applyFilters()">
           <option value="ALL">All Time</option>
           <option value="1D">Last 1 Day (24 Hours)</option>
@@ -98,17 +85,17 @@
       </div>
 
       <div class="filter-group">
-        <label for="trafficFilter">🚦 Traffic Status</label>
+        <label for="trafficFilter">Traffic Status</label>
         <select id="trafficFilter" onchange="applyFilters()">
           <option value="ALL">All Traffic Levels</option>
-          <option value="LOW">🟢 Low Congestion</option>
-          <option value="MODERATE">🟡 Moderate Congestion</option>
-          <option value="HIGH">🔴 High Congestion</option>
+          <option value="LOW">Low Congestion</option>
+          <option value="MODERATE">Moderate Congestion</option>
+          <option value="HIGH">High Congestion</option>
         </select>
       </div>
 
       <div class="filter-group">
-        <label for="parkingFilter">🅿️ Parking Lot Occupancy</label>
+        <label for="parkingFilter">Parking Lot Occupancy</label>
         <select id="parkingFilter" onchange="applyFilters()">
           <option value="ALL">All Occupancy Levels</option>
           <option value="LOW">Low (&lt; 40% Full)</option>
@@ -133,10 +120,10 @@
         <table>
           <thead>
             <tr>
+              <th>City</th>
               <th>From (Origin)</th>
               <th>To (Destination)</th>
               <th>Travel Date & Time</th>
-              <th>Weather</th>
               <th>Traffic Status</th>
               <th>Parking Occupancy</th>
               <th>Est. ETA</th>
@@ -235,10 +222,10 @@
 
         return `
           <tr>
+            <td><span class="pill" style="background:rgba(20,184,166,0.18); color:#5eead4;">${r.city_name || 'Bengaluru'}</span></td>
             <td><strong>${r.origin_name}</strong></td>
             <td><strong>${r.dest_name}</strong></td>
             <td>${r.travel_date} at ${String(r.travel_hour).padStart(2, '0')}:00</td>
-            <td>${r.weather_label}</td>
             <td><span class="pill pill-${r.traffic_status}">${r.traffic_status}</span></td>
             <td>
               <div class="occ-bar-wrap">

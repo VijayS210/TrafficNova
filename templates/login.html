@@ -3,28 +3,346 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign In | AI Road & Parking Congestion System</title>
+  <title>Sign In | Traffic Nova</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <style>
+    .auth-wrapper {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      max-width: 1040px;
+      width: 100%;
+      background: rgba(11, 18, 32, 0.94);
+      border: 1px solid rgba(45, 212, 191, 0.25);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8), 0 0 45px rgba(13, 148, 136, 0.18);
+      backdrop-filter: blur(16px);
+    }
+
+    .auth-hero {
+      position: relative;
+      background-image:
+        linear-gradient(160deg, rgba(6, 15, 28, 0.84) 0%, rgba(11, 37, 52, 0.86) 55%, rgba(6, 11, 20, 0.95) 100%),
+        url('https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=1200&q=80');
+      background-size: cover;
+      background-position: center;
+      padding: 40px 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      border-right: 1px solid rgba(45, 212, 191, 0.18);
+    }
+
+    #networkCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: 0.65;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .brand-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(16, 185, 129, 0.16);
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      color: #6ee7b7;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 600;
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulseGlow 1.8s infinite;
+    }
+
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .auth-hero h1 {
+      font-size: 1.92rem;
+      line-height: 1.24;
+      margin: 22px 0 12px;
+      background: linear-gradient(to right, #ffffff, #99f6e4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .auth-hero p {
+      color: #cbd5e1;
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    .city-preview-card {
+      position: relative;
+      z-index: 2;
+      margin-top: 24px;
+      background: rgba(6, 12, 22, 0.78);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(45, 212, 191, 0.28);
+      border-radius: 14px;
+      padding: 18px;
+      transition: transform 0.25s ease, border-color 0.25s ease;
+    }
+
+    .city-preview-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(45, 212, 191, 0.6);
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .preview-city-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .preview-status {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(245, 158, 11, 0.18);
+      color: #fcd34d;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+    }
+
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .telemetry-stat {
+      background: rgba(13, 22, 38, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .telemetry-stat span {
+      display: block;
+      font-size: 0.68rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+
+    .telemetry-stat strong {
+      font-size: 0.95rem;
+      color: #2dd4bf;
+    }
+
+    .corridor-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .corridor-tag {
+      font-size: 0.74rem;
+      background: rgba(13, 148, 136, 0.2);
+      color: #99f6e4;
+      border: 1px solid rgba(45, 212, 191, 0.3);
+      padding: 3px 9px;
+      border-radius: 6px;
+    }
+
+    .auth-form-panel {
+      padding: 38px 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .city-chip-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .city-chip {
+      background: #080f1c;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      color: #cbd5e1;
+      border-radius: 10px;
+      padding: 9px 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .city-chip:hover {
+      border-color: #2dd4bf;
+      color: #ffffff;
+    }
+
+    .city-chip.selected {
+      background: linear-gradient(135deg, rgba(13, 148, 136, 0.35), rgba(6, 182, 212, 0.25));
+      border-color: #2dd4bf;
+      color: #ffffff;
+      box-shadow: 0 0 14px rgba(45, 212, 191, 0.22);
+    }
+
+    .password-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .password-wrap input {
+      width: 100%;
+      padding-right: 42px;
+    }
+
+    .toggle-pw {
+      position: absolute;
+      right: 12px;
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .demo-hint {
+      margin-top: 16px;
+      padding: 11px 14px;
+      background: rgba(20, 184, 166, 0.08);
+      border: 1px dashed rgba(45, 212, 191, 0.35);
+      border-radius: 10px;
+      font-size: 0.8rem;
+      color: #99f6e4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .btn-autofill {
+      background: rgba(20, 184, 166, 0.2);
+      border: 1px solid rgba(45, 212, 191, 0.45);
+      color: #5eead4;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 900px) {
+      .auth-wrapper { grid-template-columns: 1fr; }
+      .auth-hero { border-right: none; border-bottom: 1px solid rgba(45, 212, 191, 0.18); }
+    }
+  </style>
 </head>
 <body class="auth-body">
   <div class="auth-wrapper">
-    <!-- Left Branding Panel -->
-    <div class="auth-hero">
-      <div>
-        <div class="brand-pill">🚦 Multi-City Urban Mobility AI</div>
-        <h1>AI Road & Parking Congestion System</h1>
+    <!-- Left Interactive Telemetry & City Light-Trail Panel -->
+    <div class="auth-hero" id="heroPanel">
+      <canvas id="networkCanvas"></canvas>
+
+      <div class="hero-content">
+        <div class="brand-header-row">
+          <div class="nova-logo">
+            <div class="nova-logo-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+            </div>
+            <span class="nova-logo-text">Traffic Nova</span>
+          </div>
+
+          <div class="live-pill">
+            <span class="pulse-dot"></span>
+            6 Metro Networks Live
+          </div>
+        </div>
+
+        <h1>Next-Gen Road & Parking Intelligence</h1>
         <p>
-          Predict real-time road bottlenecks, check parking slot availability across 6 major Indian metros,
-          and discover automated bypass routes powered by XGBoost machine learning.
+          Forecast corridor congestion, check real-time parking lot occupancy, and unlock AI-recommended bypass routes across India's 6 busiest metro cities.
         </p>
-        <ul class="feature-list">
-          <li>✓ Covers Bengaluru, Hyderabad, Mumbai, Chennai, Delhi & Kolkata</li>
-          <li>✓ Interactive Google Maps routing with automatic bypass detection</li>
-          <li>✓ Personal route history & 24-hour peak trend analytics</li>
-        </ul>
       </div>
-      <div style="font-size: 0.8rem; color: #93c5fd;">
-        Pan-India Smart Mobility Engine • v2.5
+
+      <!-- Dynamic City Preview Widget -->
+      <div class="city-preview-card">
+        <div class="preview-header">
+          <div class="preview-city-title">
+            <span id="previewCityName">Bengaluru</span>
+          </div>
+          <span class="preview-status" id="previewPeakBadge">High IT Corridor Load</span>
+        </div>
+
+        <div class="telemetry-grid">
+          <div class="telemetry-stat">
+            <span>Tracked Hubs</span>
+            <strong>15 Zones</strong>
+          </div>
+          <div class="telemetry-stat">
+            <span>Avg Parking Load</span>
+            <strong id="previewParking">76% Full</strong>
+          </div>
+          <div class="telemetry-stat">
+            <span>Bypass Savings</span>
+            <strong id="previewSavings">~18 mins</strong>
+          </div>
+        </div>
+
+        <div class="corridor-tags" id="previewTags">
+          <span class="corridor-tag">Silk Board</span>
+          <span class="corridor-tag">Whitefield ITPL</span>
+          <span class="corridor-tag">MG Road</span>
+          <span class="corridor-tag">Electronic City</span>
+        </div>
+      </div>
+
+      <div class="hero-content" style="margin-top: 20px; display: flex; justify-content: space-between; font-size: 0.78rem; color: #94a3b8;">
+        <span>Traffic Nova XGBoost Engine</span>
+        <span>Live OSRM Bypass Routing</span>
       </div>
     </div>
 
@@ -36,14 +354,15 @@
       </div>
 
       {% if error %}
-        <div class="alert-box alert-red" style="margin-bottom: 16px;">{{ error }}</div>
+        <div class="alert-box alert-red" style="margin-bottom: 14px;">{{ error }}</div>
       {% endif %}
       {% if success %}
-        <div class="alert-box alert-green" style="margin-bottom: 16px;">{{ success }}</div>
+        <div class="alert-box alert-green" style="margin-bottom: 14px;">{{ success }}</div>
       {% endif %}
 
       <form method="POST" action="/login">
         <input type="hidden" name="action" id="authAction" value="login" />
+        <input type="hidden" name="city" id="cityInput" value="{{ cities[0] if cities else 'Bengaluru' }}" />
 
         <div class="form-group" id="nameField" style="display: none;">
           <label for="full_name">Full Name</label>
@@ -51,12 +370,19 @@
         </div>
 
         <div class="form-group">
-          <label for="city">🏙️ Select Your City</label>
-          <select id="city" name="city" required>
+          <label>Select Metro City</label>
+          <div class="city-chip-grid" id="cityChipGrid">
             {% for c in cities %}
-              <option value="{{ c }}">{{ c }}</option>
+              <button
+                type="button"
+                class="city-chip {% if loop.first %}selected{% endif %}"
+                data-city="{{ c }}"
+                onclick="selectCity('{{ c }}')"
+              >
+                {{ c }}
+              </button>
             {% endfor %}
-          </select>
+          </div>
         </div>
 
         <div class="form-group">
@@ -66,34 +392,170 @@
 
         <div class="form-group">
           <label for="password">Password</label>
-          <input type="password" id="password" name="password" value="demo123" required />
+          <div class="password-wrap">
+            <input type="password" id="password" name="password" value="demo123" required />
+            <button type="button" class="toggle-pw" onclick="togglePassword()" title="Show/Hide Password">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
         </div>
 
-        <button type="submit" class="btn-primary" id="submitBtn" style="margin-top: 8px;">
-          Sign In to Dashboard →
+        <button type="submit" class="btn-primary" id="submitBtn" style="margin-top: 6px;">
+          Launch Bengaluru Dashboard →
         </button>
       </form>
 
       <div class="demo-hint">
-        <strong>Instant Demo Login Pre-filled:</strong><br />
-        <code>demo@smarttraffic.in</code> / <code>demo123</code>
+        <div>
+          <strong>Demo:</strong> <code>demo@smarttraffic.in</code>
+        </div>
+        <button type="button" class="btn-autofill" onclick="fillDemo()">Fill Demo</button>
       </div>
     </div>
   </div>
 
   <script>
+    const CITY_META = {
+      "Bengaluru": { status: "High IT Corridor Load", parking: "76% Full", savings: "~18 mins", color: "#14b8a6", hubs: ["Silk Board", "Whitefield ITPL", "MG Road", "Electronic City"] },
+      "Hyderabad": { status: "Moderate Ring Flow", parking: "64% Full", savings: "~14 mins", color: "#10b981", hubs: ["HITEC City", "Gachibowli", "Jubilee Hills", "Secunderabad"] },
+      "Mumbai": { status: "Dense Arterial Traffic", parking: "84% Full", savings: "~22 mins", color: "#f59e0b", hubs: ["BKC", "Andheri WEH", "Lower Parel", "CSMT"] },
+      "Chennai": { status: "Steady OMR Flow", parking: "68% Full", savings: "~15 mins", color: "#06b6d4", hubs: ["OMR Tidel Park", "Guindy", "T. Nagar", "Anna Nagar"] },
+      "Delhi": { status: "NCR Peak Transit", parking: "79% Full", savings: "~19 mins", color: "#2dd4bf", hubs: ["Connaught Place", "Cyber Hub", "Noida Sec 18", "Dhaula Kuan"] },
+      "Kolkata": { status: "EM Bypass Active", parking: "66% Full", savings: "~13 mins", color: "#34d399", hubs: ["Salt Lake Sec V", "Howrah", "Park Street", "New Town"] }
+    };
+
+    let particleColor = "#14b8a6";
+
+    function selectCity(cityName) {
+      document.getElementById("cityInput").value = cityName;
+      document.querySelectorAll(".city-chip").forEach(btn => {
+        btn.classList.toggle("selected", btn.dataset.city === cityName);
+      });
+
+      const isReg = document.getElementById("authAction").value === "register";
+      if (!isReg) {
+        document.getElementById("submitBtn").innerText = `Launch ${cityName} Dashboard →`;
+      }
+
+      const meta = CITY_META[cityName] || CITY_META["Bengaluru"];
+      particleColor = meta.color;
+      document.getElementById("previewCityName").innerText = cityName;
+      document.getElementById("previewPeakBadge").innerText = meta.status;
+      document.getElementById("previewParking").innerText = meta.parking;
+      document.getElementById("previewSavings").innerText = meta.savings;
+      document.getElementById("previewTags").innerHTML = meta.hubs
+        .map(h => `<span class="corridor-tag">${h}</span>`)
+        .join("");
+    }
+
     function switchAuth(mode) {
       const isReg = mode === "register";
+      const currentCity = document.getElementById("cityInput").value;
       document.getElementById("authAction").value = mode;
       document.getElementById("nameField").style.display = isReg ? "flex" : "none";
       document.getElementById("tabLogin").classList.toggle("active", !isReg);
       document.getElementById("tabRegister").classList.toggle("active", isReg);
-      document.getElementById("submitBtn").innerText = isReg ? "Create Account →" : "Sign In to Dashboard →";
+      document.getElementById("submitBtn").innerText = isReg
+        ? "Create Account →"
+        : `Launch ${currentCity} Dashboard →`;
+
       if (isReg) {
         document.getElementById("email").value = "";
         document.getElementById("password").value = "";
       }
     }
+
+    function togglePassword() {
+      const pw = document.getElementById("password");
+      pw.type = pw.type === "password" ? "text" : "password";
+    }
+
+    function fillDemo() {
+      switchAuth("login");
+      document.getElementById("email").value = "demo@smarttraffic.in";
+      document.getElementById("password").value = "demo123";
+    }
+
+    const canvas = document.getElementById("networkCanvas");
+    const ctx = canvas.getContext("2d");
+    const heroPanel = document.getElementById("heroPanel");
+    let nodes = [];
+    let mouse = { x: -500, y: -500 };
+
+    function resizeCanvas() {
+      canvas.width = heroPanel.offsetWidth;
+      canvas.height = heroPanel.offsetHeight;
+      nodes = Array.from({ length: 28 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.55,
+        vy: (Math.random() - 0.5) * 0.55,
+        r: Math.random() * 2 + 1.5
+      }));
+    }
+
+    heroPanel.addEventListener("mousemove", e => {
+      const rect = heroPanel.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+    });
+
+    heroPanel.addEventListener("mouseleave", () => {
+      mouse.x = -500;
+      mouse.y = -500;
+    });
+
+    function animateNetwork() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i];
+        n.x += n.vx;
+        n.y += n.vy;
+
+        if (n.x < 0 || n.x > canvas.width) n.vx *= -1;
+        if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fillStyle = particleColor;
+        ctx.fill();
+
+        for (let j = i + 1; j < nodes.length; j++) {
+          const m = nodes[j];
+          const dist = Math.hypot(n.x - m.x, n.y - m.y);
+          if (dist < 110) {
+            ctx.beginPath();
+            ctx.moveTo(n.x, n.y);
+            ctx.lineTo(m.x, m.y);
+            ctx.strokeStyle = `rgba(148, 163, 184, ${0.22 * (1 - dist / 110)})`;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        }
+
+        const mouseDist = Math.hypot(n.x - mouse.x, n.y - mouse.y);
+        if (mouseDist < 140) {
+          ctx.beginPath();
+          ctx.moveTo(n.x, n.y);
+          ctx.lineTo(mouse.x, mouse.y);
+          ctx.strokeStyle = particleColor;
+          ctx.globalAlpha = 0.45 * (1 - mouseDist / 140);
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      requestAnimationFrame(animateNetwork);
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+    animateNetwork();
   </script>
 </body>
 </html>
