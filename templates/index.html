@@ -22,7 +22,6 @@
           <div class="road-line-dashes"></div>
           <div class="moving-car-wrapper">
             <div class="car-headlight-beam"></div>
-            <!-- Sleek Vector Car Icon -->
             <svg width="42" height="24" viewBox="0 0 64 36" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M8 22L13 10C14.2 7.5 16.8 6 19.6 6H41.5C44.5 6 47.2 7.7 48.5 10.4L53 19.5C56.5 20.2 59 22.8 59 26V28C59 29.1 58.1 30 57 30H53.5C53.5 33.3 50.8 36 47.5 36C44.2 36 41.5 33.3 41.5 30H22.5C22.5 33.3 19.8 36 16.5 36C13.2 36 10.5 33.3 10.5 30H7C5.9 30 5 29.1 5 28V25C5 23.4 6.2 22.1 8 22Z" fill="url(#carGrad)"/>
               <path d="M18 10H39.5L44.5 18H14.5L18 10Z" fill="#060B14" fill-opacity="0.78"/>
@@ -76,6 +75,10 @@
       <div class="profile-dropdown" id="profileDropdown">
         <button type="button" class="dropdown-item" onclick="openModal('accountModal')">Account</button>
         <button type="button" class="dropdown-item" onclick="openModal('cityModal')">Change City ({{ active_city }})</button>
+        <button type="button" class="dropdown-item" onclick="toggleAppTheme()">
+          <span>Theme</span>
+          <span class="theme-pill-badge" id="themeToggleLabel">Dark</span>
+        </button>
         <a href="/logout" class="dropdown-item">Switch Account</a>
         <a href="/history" class="dropdown-item">Search History</a>
         <div class="dropdown-divider"></div>
@@ -93,31 +96,29 @@
       </div>
       <div class="account-row"><span>Username</span><strong>{{ user_name }}</strong></div>
       <div class="account-row"><span>Registered Email</span><strong>{{ user_email }}</strong></div>
-      <div class="account-row"><span>Active Metro City</span><strong style="color:#2dd4bf;">{{ active_city }}</strong></div>
+      <div class="account-row"><span>Active Metro City</span><strong style="color:var(--accent-primary);">{{ active_city }}</strong></div>
       <div style="margin-top: 18px;">
         <a href="/logout" class="btn-primary" style="text-align:center; text-decoration:none; display:block;">Switch Account</a>
       </div>
     </div>
   </div>
 
-  <!-- Change City Modal -->
+  <!-- Change City Modal (Highlights Active City) -->
   <div class="modal-backdrop" id="cityModal" onclick="closeModal('cityModal')">
     <div class="modal-card" onclick="event.stopPropagation()">
       <div class="modal-header">
         <h3>Select Metro City</h3>
         <button type="button" class="modal-close" onclick="closeModal('cityModal')">✕</button>
       </div>
-      <p style="font-size:0.84rem; color:#94a3b8; margin-bottom:14px;">
-        Switch city to load its 15 local corridors, bypass routes, and Traffic Nova forecast:
+      <p style="font-size:0.84rem; color:var(--text-secondary); margin-bottom:14px;">
+        Currently active: <strong style="color:var(--accent-primary);">{{ active_city }}</strong>. Select another metro to switch corridors:
       </p>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      <div class="city-grid">
         {% for c in cities %}
           <a href="/set-city/{{ c }}"
-             style="padding:11px; border-radius:8px; text-align:center; text-decoration:none; font-weight:600; font-size:0.88rem;
-                    border:1px solid {{ '#2dd4bf' if c == active_city else 'rgba(148,163,184,0.2)' }};
-                    background:{{ 'rgba(20,184,166,0.18)' if c == active_city else '#080f1c' }};
-                    color:{{ '#5eead4' if c == active_city else '#f1f5f9' }};">
-            {{ c }}
+             class="city-option-btn {% if c == active_city %}active{% endif %}">
+            <span>{{ c }}</span>
+            {% if c == active_city %}<span>✓</span>{% endif %}
           </a>
         {% endfor %}
       </div>
@@ -245,7 +246,7 @@
         </div>
 
         <div class="sim-controls-row">
-          <span style="font-size:0.8rem; color:#94a3b8;">Real-time corridor flow telemetry</span>
+          <span style="font-size:0.8rem; color:var(--text-secondary);">Real-time corridor flow telemetry</span>
           <span class="pill pill-MODERATE" id="simStatusPill">Moderate traffic</span>
         </div>
 
@@ -262,7 +263,7 @@
           <div class="card-header">
             <h3>{{ active_city }} Live Corridor & Traffic Overlay Map</h3>
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-              <span style="font-size:0.78rem; color:#94a3b8;">
+              <span style="font-size:0.78rem; color:var(--text-secondary);">
                 <span style="color:#10b981;">● Fast</span> &nbsp;
                 <span style="color:#f59e0b;">● Moderate</span> &nbsp;
                 <span style="color:#ef4444;">● Slow</span> &nbsp;
@@ -352,7 +353,7 @@
               <span class="pill pill-HIGH" id="aiReportBadge">High congestion</span>
             </div>
             <div class="risk-headline" id="aiRiskPct" style="color:#ef4444;">82% congestion risk</div>
-            <div style="font-size:0.78rem; color:#94a3b8;">Factors influencing XGBoost prediction</div>
+            <div style="font-size:0.78rem; color:var(--text-secondary);">Factors influencing XGBoost prediction</div>
 
             <div class="factor-list">
               <div>
@@ -402,7 +403,7 @@
           <div class="card-header">
             <h3>Recent Search History (Latest 2)</h3>
             <div style="display:flex; align-items:center; gap:10px;">
-              <a href="/history" style="font-size:0.8rem; color:#2dd4bf; text-decoration:none; font-weight:600;">View All →</a>
+              <a href="/history" style="font-size:0.8rem; color:var(--accent-primary); text-decoration:none; font-weight:600;">View All →</a>
               <button class="btn-clear" onclick="clearHistory()">Clear</button>
             </div>
           </div>
@@ -418,7 +419,7 @@
                 </tr>
               </thead>
               <tbody id="historyBody">
-                <tr><td colspan="5" style="text-align:center; color:#94a3b8;">No searches recorded yet.</td></tr>
+                <tr><td colspan="5" style="text-align:center; color:var(--text-secondary);">No searches recorded yet.</td></tr>
               </tbody>
             </table>
           </div>
@@ -431,6 +432,31 @@
     const ACTIVE_CITY = "{{ active_city }}";
     const CITY_CENTER = {{ city_center | tojson }};
     const CITY_LOCATIONS = {{ origins | tojson }};
+    let lastPredictionData = null;
+
+    /* =========================================================
+       THEME TOGGLE (DARK DEFAULT <-> WARM IVORY CHAMPAGNE LIGHT)
+       ========================================================= */
+    function applySavedTheme() {
+      const saved = localStorage.getItem("trafficNovaTheme") || "dark";
+      const isLight = saved === "light";
+      document.body.classList.toggle("light-theme", isLight);
+      const badge = document.getElementById("themeToggleLabel");
+      if (badge) badge.innerText = isLight ? "Light (Ivory)" : "Dark";
+    }
+
+    function toggleAppTheme() {
+      const isCurrentlyLight = document.body.classList.contains("light-theme");
+      const nextTheme = isCurrentlyLight ? "dark" : "light";
+      localStorage.setItem("trafficNovaTheme", nextTheme);
+      applySavedTheme();
+      if (lastPredictionData) {
+        renderTrendChart(lastPredictionData);
+        updateKpiColors(lastPredictionData.road_level);
+      }
+    }
+
+    applySavedTheme();
 
     function showRouteLoader(originLabel, destLabel) {
       const overlay = document.getElementById("routeLoaderOverlay");
@@ -581,6 +607,7 @@
     let currentDensity = 68;
 
     function renderSimUI() {
+      const isLight = document.body.classList.contains("light-theme");
       const speed = Math.max(12, Math.round(68 - currentDensity * 0.52));
       document.getElementById("simVehicles").innerText = currentVehicles;
       document.getElementById("simDensity").innerText = `${currentDensity}%`;
@@ -592,15 +619,15 @@
       if (currentDensity >= 75) {
         pill.className = "pill pill-HIGH";
         pill.innerText = "Heavy traffic";
-        densityEl.style.color = "#ef4444";
+        densityEl.style.color = isLight ? "#C05640" : "#ef4444";
       } else if (currentDensity >= 45) {
         pill.className = "pill pill-MODERATE";
         pill.innerText = "Moderate traffic";
-        densityEl.style.color = "#f59e0b";
+        densityEl.style.color = isLight ? "#A98243" : "#f59e0b";
       } else {
         pill.className = "pill pill-LOW";
         pill.innerText = "Low traffic";
-        densityEl.style.color = "#10b981";
+        densityEl.style.color = isLight ? "#1F5B41" : "#10b981";
       }
     }
 
@@ -741,6 +768,63 @@
       return casing;
     }
 
+    function updateKpiColors(roadLevel) {
+      const isLight = document.body.classList.contains("light-theme");
+      const trafficEl = document.getElementById("kpiTraffic");
+      const riskEl = document.getElementById("aiRiskPct");
+      const colors = isLight
+        ? ["#1F5B41", "#A98243", "#C05640"]
+        : ["#10b981", "#f59e0b", "#ef4444"];
+      trafficEl.style.color = colors[roadLevel] || colors[1];
+      riskEl.style.color = colors[roadLevel] || colors[1];
+    }
+
+    function renderTrendChart(data) {
+      const isLight = document.body.classList.contains("light-theme");
+      const primaryLineColor = isLight ? "#A98243" : "#14b8a6";
+      const primaryFillColor = isLight ? "rgba(169, 130, 67, 0.16)" : "rgba(20, 184, 166, 0.14)";
+      const secondaryLineColor = isLight ? "#292820" : "#f59e0b";
+      const tickColor = isLight ? "#827C70" : "#94a3b8";
+      const gridColor = isLight ? "rgba(130, 124, 112, 0.15)" : "rgba(148, 163, 184, 0.1)";
+      const legendColor = isLight ? "#292820" : "#f1f5f9";
+
+      const ctx = document.getElementById("trendChart").getContext("2d");
+      if (trendChartInstance) trendChartInstance.destroy();
+
+      trendChartInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`),
+          datasets: [
+            {
+              label: "Parking Occupancy (%)",
+              data: data.hourly_parking,
+              borderColor: primaryLineColor,
+              backgroundColor: primaryFillColor,
+              tension: 0.35,
+              fill: true,
+            },
+            {
+              label: "Road Congestion Index",
+              data: data.hourly_road,
+              borderColor: secondaryLineColor,
+              borderDash: [5, 5],
+              tension: 0.25,
+              fill: false,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { min: 0, max: 105, ticks: { color: tickColor }, grid: { color: gridColor } },
+            x: { ticks: { color: tickColor }, grid: { color: gridColor } },
+          },
+          plugins: { legend: { labels: { color: legendColor } } },
+        },
+      });
+    }
+
     async function fetchPrediction(saveHistory = true) {
       const hourVal = parseInt(document.getElementById("hourSlider").value, 10);
       const weatherVal = parseInt(document.getElementById("weather").value, 10);
@@ -752,7 +836,6 @@
       const displayOrig = origChoice === "CUSTOM" && customOrigVal.trim() ? customOrigVal.trim() : origChoice;
       const displayDest = destChoice === "CUSTOM" && customDestVal.trim() ? customDestVal.trim() : destChoice;
 
-      // Show the moving-car loading overlay only while the map route request is in flight
       showRouteLoader(displayOrig, displayDest);
 
       try {
@@ -775,6 +858,7 @@
           body: JSON.stringify(payload),
         });
         const data = await res.json();
+        lastPredictionData = data;
 
         document.getElementById("gtwHourSlider").value = Math.min(22, Math.max(6, hourVal));
         document.getElementById("gtwSelectedLabel").innerText = `• ${String(hourVal).padStart(2, "0")}:00`;
@@ -786,9 +870,9 @@
           `[${data.city}] Route: <strong>${data.origin.name}</strong>${stopChainText} ➔ <strong>${data.destination.name}</strong> &nbsp;|&nbsp; Departure: <strong>${String(hourVal).padStart(2, "0")}:00</strong>`;
 
         const levels = [
-          { text: "LOW", desc: "Free-flowing traffic", color: "#10b981", pill: "pill-LOW" },
-          { text: "MODERATE", desc: "Slow-moving at junctions", color: "#f59e0b", pill: "pill-MODERATE" },
-          { text: "HIGH", desc: "Heavy bottleneck expected", color: "#ef4444", pill: "pill-HIGH" },
+          { text: "LOW", desc: "Free-flowing traffic", pill: "pill-LOW" },
+          { text: "MODERATE", desc: "Slow-moving at junctions", pill: "pill-MODERATE" },
+          { text: "HIGH", desc: "Heavy bottleneck expected", pill: "pill-HIGH" },
         ];
         const lvl = levels[data.road_level];
 
@@ -796,6 +880,7 @@
         document.getElementById("kpiTrafficSub").innerText = lvl.desc;
         document.getElementById("kpiParking").innerText = `${data.parking_occ}%`;
         document.getElementById("kpiParkingSub").innerText = `${data.available_pct}% Slots Available`;
+        updateKpiColors(data.road_level);
 
         const totalEta = data.primary_route.duration_min + data.est_delay;
         document.getElementById("kpiPrimaryEta").innerText = `${totalEta} mins (${data.primary_route.distance_km} km)`;
@@ -815,7 +900,6 @@
         const riskScore = Math.min(98, Math.round(densityFactor * 0.38 + histFactor * 0.27 + timeFactor * 0.22 + weatherFactor * 0.13));
 
         document.getElementById("aiRiskPct").innerText = `${riskScore}% congestion risk`;
-        document.getElementById("aiRiskPct").style.color = lvl.color;
         document.getElementById("aiReportBadge").className = `pill ${lvl.pill}`;
         document.getElementById("aiReportBadge").innerText = `${lvl.text.charAt(0) + lvl.text.slice(1).toLowerCase()} congestion`;
 
@@ -878,7 +962,6 @@
           .bindPopup(`<b>Destination Hub (B):</b> ${data.destination.name}<br>Parking Occupancy: ${data.parking_occ}%`)
           .addTo(routeLayerGroup);
 
-        // Available Parking Location Markers near Destination
         const parkingLots = [
           { name: `${data.destination.name.split('/')[0]} Central Plaza Parking`, dLat: 0.0042, dLon: 0.0038, free: Math.max(8, data.available_pct) },
           { name: `${data.destination.name.split('/')[0]} Metro Multi-Level Lot`, dLat: -0.0036, dLon: 0.0045, free: Math.max(12, Math.min(95, data.available_pct + 11)) },
@@ -891,7 +974,6 @@
             .addTo(routeLayerGroup);
         });
 
-        // Clickable Mid-Route Checkpoint Marker
         const coords = data.primary_route.coords;
         if (coords && coords.length > 4) {
           const midIdx = Math.floor(coords.length / 2);
@@ -900,7 +982,6 @@
             .addTo(routeLayerGroup);
         }
 
-        // Route Comparison Panel Calculations
         const primFuel = (data.primary_route.distance_km * 0.082 + data.est_delay * 0.025).toFixed(2);
         document.getElementById("compPrimBadge").className = `pill ${lvl.pill}`;
         document.getElementById("compPrimBadge").innerText = lvl.text;
@@ -971,45 +1052,10 @@
           `https://www.google.com/maps/dir/?api=1&origin=${data.origin.lat},${data.origin.lon}&destination=${data.destination.lat},${data.destination.lon}${wpParam}&travelmode=driving`;
 
         document.getElementById("chartTitle").innerText = `24-Hour Trend: ${data.destination.name}`;
-        const ctx = document.getElementById("trendChart").getContext("2d");
-        if (trendChartInstance) trendChartInstance.destroy();
-
-        trendChartInstance = new Chart(ctx, {
-          type: "line",
-          data: {
-            labels: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`),
-            datasets: [
-              {
-                label: "Parking Occupancy (%)",
-                data: data.hourly_parking,
-                borderColor: "#14b8a6",
-                backgroundColor: "rgba(20, 184, 166, 0.14)",
-                tension: 0.35,
-                fill: true,
-              },
-              {
-                label: "Road Congestion Index",
-                data: data.hourly_road,
-                borderColor: "#f59e0b",
-                borderDash: [5, 5],
-                tension: 0.25,
-                fill: false,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            scales: {
-              y: { min: 0, max: 105, ticks: { color: "#94a3b8" }, grid: { color: "rgba(148,163,184,0.1)" } },
-              x: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(148,163,184,0.1)" } },
-            },
-            plugins: { legend: { labels: { color: "#f1f5f9" } } },
-          },
-        });
+        renderTrendChart(data);
 
         if (saveHistory) await loadHistory();
       } finally {
-        // Hide the car loader immediately once map tiles/routes finish rendering
         hideRouteLoader();
       }
     }
@@ -1020,14 +1066,14 @@
       const tbody = document.getElementById("historyBody");
 
       if (!rows.length) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94a3b8;">No searches recorded yet.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-secondary);">No searches recorded yet.</td></tr>`;
         return;
       }
 
       const recentTwo = rows.slice(0, 2);
       tbody.innerHTML = recentTwo.map(r => `
         <tr class="history-row" onclick="replaySearch('${r.origin_name}', '${r.dest_name}', '${r.travel_date}', ${r.travel_hour})">
-          <td><strong>${r.origin_name.split('/')[0]}</strong> ➔ ${r.dest_name.split('/')[0]}<br><span style="font-size:0.72rem; color:#94a3b8;">[${r.city_name || 'Bengaluru'}] ${r.searched_at}</span></td>
+          <td><strong>${r.origin_name.split('/')[0]}</strong> ➔ ${r.dest_name.split('/')[0]}<br><span style="font-size:0.72rem; color:var(--text-secondary);">[${r.city_name || 'Bengaluru'}] ${r.searched_at}</span></td>
           <td>${String(r.travel_hour).padStart(2, '0')}:00</td>
           <td><span class="pill pill-${r.traffic_status}">${r.traffic_status}</span></td>
           <td>${r.parking_occ}%</td>
